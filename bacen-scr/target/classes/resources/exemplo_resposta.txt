@@ -1,0 +1,116 @@
+Invoking getResumoDoCliente...
+getResumoDoCliente.result=br.gov.bcb.scr2.operacional.webservice.ResumoDoCliente@1ac14dd
+XML A PARTIR DO HASH
+<br.gov.bcb.scr2.operacional.webservice.ResumoDoCliente>
+  <cnpjDaIFSolicitante>61186680</cnpjDaIFSolicitante>
+  <codigoDoCliente>13323274</codigoDoCliente>
+  <coobrigacaoAssumida>0.00</coobrigacaoAssumida>
+  <coobrigacaoRecebida>0.00</coobrigacaoRecebida>
+  <dataBaseConsultada>2011-03</dataBaseConsultada>
+  <dataInicioRelacionamento>2009-02-04</dataInicioRelacionamento>
+  <listaDeResumoDasOperacoes>
+    <br.gov.bcb.scr2.operacional.webservice.ResumoDaOperacao>
+      <listaDeVencimentos>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v310</codigoVencimento>
+          <valorVencimento>42324.40</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v180</codigoVencimento>
+          <valorVencimento>208.76</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v255</codigoVencimento>
+          <valorVencimento>48392.91</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v150</codigoVencimento>
+          <valorVencimento>515.39</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v175</codigoVencimento>
+          <valorVencimento>201.53</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v250</codigoVencimento>
+          <valorVencimento>361.88</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v170</codigoVencimento>
+          <valorVencimento>4506.50</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v140</codigoVencimento>
+          <valorVencimento>4391056.80</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v165</codigoVencimento>
+          <valorVencimento>800957.62</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v320</codigoVencimento>
+          <valorVencimento>54322.02</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+        <br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+          <codigoVencimento>v160</codigoVencimento>
+          <valorVencimento>2746254.54</valorVencimento>
+        </br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento>
+      </listaDeVencimentos>
+      <modalidade>0202</modalidade>
+      <variacaoCambial>N</variacaoCambial>
+    </br.gov.bcb.scr2.operacional.webservice.ResumoDaOperacao>
+  </listaDeResumoDasOperacoes>
+  <percentualDocumentosProcessados>91.79</percentualDocumentosProcessados>
+  <percentualVolumeProcessado>99.99</percentualVolumeProcessado>
+  <quantidadeDeInstituicoes>1</quantidadeDeInstituicoes>
+  <quantidadeDeOperacoes>12341</quantidadeDeOperacoes>
+  <quantidadeOperacoesDiscordancia>0</quantidadeOperacoesDiscordancia>
+  <quantidadeOperacoesSubJudice>0</quantidadeOperacoesSubJudice>
+  <responsabilidadeTotalDiscordancia>0</responsabilidadeTotalDiscordancia>
+  <responsabilidadeTotalSubJudice>0</responsabilidadeTotalSubJudice>
+  <riscoIndiretoVendor>0.00</riscoIndiretoVendor>
+  <tipoDoCliente>2</tipoDoCliente>
+</br.gov.bcb.scr2.operacional.webservice.ResumoDoCliente>
+XML A PARTIR DO HASH - FIM
+DataBaseConsultada-->>2011-03
+TipoDoCliente-->>2
+CodigoDoCliente-->>13323274
+CnpjDaIFSolicitante-->>61186680
+CoobrigacaoAssumida-->>0.00
+CoobrigacaoRecebida-->>0.00
+DataInicioRelacionamento-->>2009-02-04
+PercentualDocumentosProcessados-->>91.79
+PercentualVolumeProcessado-->>99.99
+QuantidadeDeInstituicoes-->>1
+QuantidadeDeOperacoes-->>12341
+QuantidadeOperacoesDiscordancia-->>0
+QuantidadeOperacoesSubJudice-->>0
+ResponsabilidadeTotalDiscordancia-->>0
+ResponsabilidadeTotalSubJudice-->>0
+RiscoIndiretoVendor-->>0.00
+ListaDeMensagensDeValidacao-->>0
+ListaDeResumoDasOperacoes-->>1
+0202
+N
+v310
+42324.40
+v180
+208.76
+v255
+48392.91
+v150
+515.39
+v175
+201.53
+v250
+361.88
+v170
+4506.50
+v140
+4391056.80
+v165
+800957.62
+v320
+54322.02
+v160
+2746254.54
