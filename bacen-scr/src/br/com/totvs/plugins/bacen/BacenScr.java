@@ -1,11 +1,7 @@
 package br.com.totvs.plugins.bacen;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
@@ -13,13 +9,13 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
 import br.com.totvs.exceptions.ConfigException;
 import br.com.totvs.exceptions.InfraException;
 import br.com.totvs.exceptions.LayoutException;
+import br.com.totvs.plugins.PluginConfig;
 import br.com.totvs.plugins.PluginInterface;
 import br.com.totvs.plugins.bacen.constants.Constants;
 import br.com.totvs.plugins.bacen.exceptions.ResourceErroAbstract;
@@ -40,8 +36,6 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 	final Logger LOGGER = Logger.getLogger("BacenScr");
 
-	private static String erroMsg = "";
-	
 	private static String userSisbacen = "";
 	
 	private static String passwordSisbacen = "";
@@ -50,26 +44,30 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		HashMap<String, Object> hashOut = new HashMap<String, Object>();
 
-		Properties pArquivo = new Properties();
-
 		try {
-			LOGGER.debug(">> BacenScr.execute()");
+			
+			LOGGER.info(">> BacenScr.execute()");
 			
 			BacenUtil.validarParametrosEntrada(hashIn);
 
-			this.inicializarPropriedades(pArquivo);
+			HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("bacen-scr");
+
+			this.setTrustStore(configuracoesPlugin);
 
 			this.validarAutenticacaoExecucao(hashIn);
 			
-			ResumoDoCliente retornoResumo = this.consumirWebServiceBacen(hashIn, pArquivo);
+			ResumoDoCliente retornoResumo = this.consumirWebServiceBacen(hashIn, configuracoesPlugin);
 			
 			BacenUtil.popularXMLEnvioRetorno(hashIn, hashOut, retornoResumo);
 
 			this.tratarNegocio(hashOut, retornoResumo);
 			
-			LOGGER.debug("<< BacenScr.execute()");		
+			LOGGER.info("<< BacenScr.execute()");
+			
 		} catch (LayoutException | BCServicoException_Exception | MalformedURLException | FileNotFoundException e) {
+			
 			tratarException(e);
+			
 		}
 		return hashOut;
 	}
@@ -80,84 +78,40 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	 * @param pArquivo
 	 * @throws ConfigException
 	 * @throws FileNotFoundException
+	 * @throws LayoutException 
 	 */
-	private void inicializarPropriedades(Properties pArquivo) throws ConfigException, FileNotFoundException {
-		// essa variavel deve conter o PATH para todo o processo do acesso
-		String intelllectorDataDir = System.getProperty(Constants.INTELLECTOR_DATADIR);
-
-		if (intelllectorDataDir == null || intelllectorDataDir.isEmpty()) {
-			erroMsg = "Nao encontrou variavel de ambiente '" + Constants.INTELLECTOR_DATADIR + "'";
-			LOGGER.error(erroMsg);
-			// O throw vai para a tela.
-			throw new ConfigException(erroMsg);
-		}
-
-		LOGGER.debug(Constants.INTELLECTOR_DATADIR + " -->>" + intelllectorDataDir);
-
-		// arquivo de properties (bacenscr.properties)
-		String accessProperties = intelllectorDataDir + "/acessos/sisbacenscr" + "/resources/sisbacenscr.properties";
-
-		LOGGER.debug("accessProperties -->>" + accessProperties);
-
-		// inputstream para o arquivo de propriedades
-		InputStream iProp = new BufferedInputStream(new FileInputStream(accessProperties));
-
-		/**
-		 * Abrir e tratar o arquivo de properties... Obs.: aqui teriamos a opcao de chamar metodo para a montagem dess string; seria trocar
-		 * seis por meia duzia; se algum dsv organizado supor isso, que o implemente (tantan)
-		 */
-		// carrega o arquivo de propriedades
-		try {
-			pArquivo.load(iProp);
-		} catch (IOException e) {
-			erroMsg = "Nao foi possivel abrir properties: [" + accessProperties + "]";
-			LOGGER.error(erroMsg);
-			LOGGER.error(e);
-			throw new ConfigException(erroMsg);
-		} finally {
-			try {
-				iProp.close();
-			} catch (IOException e) {
-				erroMsg = "Nao foi possivel fechar o arquivo de propriedade: [" + accessProperties + "]";
-				LOGGER.error(erroMsg);
-				LOGGER.error(e);
-				throw new ConfigException(erroMsg);
-			}
-		}
-
-		// Propriedades da TrustStore
-		String trustStore = pArquivo.getProperty(Constants.BACENSCR_TRUSTSTORE);
+	private void setTrustStore(HashMap<String, Object> configuracoesPlugin) throws ConfigException, FileNotFoundException, LayoutException {
+				
+		String trustStore = (String) configuracoesPlugin.get(Constants.BACENSCR_TRUSTSTORE);
+		
 		if (trustStore == null || trustStore.isEmpty()) {
-			erroMsg = "Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTORE + " no aquivo de propriedades'";
-			LOGGER.error(erroMsg);
-			throw new ConfigException(erroMsg);
+			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTORE + " no aquivo JSON'");
 		}
-		trustStore = intelllectorDataDir + "/acessos/sisbacenscr" + "/resources/" + trustStore;
-		LOGGER.debug("trustStore -->>" + trustStore);
+		
+		trustStore = "" + "/acessos/sisbacenscr" + "/resources/" + trustStore;
+		
+		LOGGER.info("trustStore -->>" + trustStore);
 
-		// Testar se existe a Trustsore
 		File fileTesteTrustStore = new File(trustStore);
 		if (!fileTesteTrustStore.exists()) {
-			erroMsg = "O arquivo Truststore nao existe -->>" + trustStore;
-			LOGGER.error(erroMsg);
-			throw new ConfigException(erroMsg);
+			throw new ConfigException("O arquivo Truststore nao existe -->>" + trustStore);
 		}
 
-		String trustStoreType = pArquivo.getProperty(Constants.BACENSCR_TRUSTSTORETYPE);
+		String trustStoreType = (String) configuracoesPlugin.get(Constants.BACENSCR_TRUSTSTORETYPE);
+		
 		if (trustStoreType == null || trustStoreType.isEmpty()) {
-			erroMsg = "Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTORETYPE + " no aquivo de propriedades'";
-			LOGGER.error(erroMsg);
-			throw new ConfigException(erroMsg);
+			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTORETYPE + " no aquivo JSON'");
 		}
-		LOGGER.debug("trustStoreType -->>" + trustStoreType);
+		
+		LOGGER.info("trustStoreType -->>" + trustStoreType);
 
-		String trustStorePassword = pArquivo.getProperty(Constants.BACENSCR_TRUSTSTOREPASSWORD);
+		String trustStorePassword = (String) configuracoesPlugin.get(Constants.BACENSCR_TRUSTSTOREPASSWORD);
+		
 		if (trustStorePassword == null || trustStorePassword.isEmpty()) {
-			erroMsg = "Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTOREPASSWORD + "no aquivo de propriedades'";
-			LOGGER.error(erroMsg);
-			throw new ConfigException(erroMsg);
+			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_TRUSTSTOREPASSWORD + "no aquivo JSON'");
 		}
-		LOGGER.debug("trustStorePassword -->>" + trustStorePassword);
+		
+		LOGGER.info("trustStorePassword -->>" + trustStorePassword);
 
 		System.clearProperty("javax.net.ssl.keyStore");
 		System.clearProperty("javax.net.ssl.keyStorePassword");
@@ -177,7 +131,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	 */
 	private void validarAutenticacaoExecucao(Map<String, Object> hashIn) throws ConfigException {
 
-		LOGGER.debug("->>validarAutenticacaoExecucao");
+		LOGGER.info("->>validarAutenticacaoExecucao");
 
 		userSisbacen = (String) hashIn.get("USUARIOSISBACEN");
 		
@@ -189,116 +143,86 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 				protected PasswordAuthentication getPasswordAuthentication() {
 					String user = userSisbacen;
 					String password = passwordSisbacen;
-					LOGGER.debug("Configurou o usuario/senha para autorizacao no site.");
+					LOGGER.info("Configurou o usuario/senha para autorizacao no site.");
 					return new PasswordAuthentication(user, password.toCharArray());
 				}
 			});
 		} catch (RuntimeException e1) {
 			throw new ConfigException("Erro no Authenticator.setDefault(): Erro ao autenticar o usuario e senha no SisbacenSCR.", e1);
 		}
-		LOGGER.debug("<<--validarAutenticacaoExecucao");
+		LOGGER.info("<<--validarAutenticacaoExecucao");
 	}
 
-	private ResumoDoCliente consumirWebServiceBacen(Map<String, Object> hashIn, Properties pArquivo)
+	private ResumoDoCliente consumirWebServiceBacen(Map<String, Object> hashIn, HashMap<String, Object> configuracoesPlugin)
 			throws MalformedURLException, ConfigException, BCServicoException_Exception {
-		LOGGER.debug("-->> consumirWebServiceBacen");
-		URL wsdlURL = new URL(BacenUtil.consultarURLBacen(pArquivo));
+		LOGGER.info("-->> consumirWebServiceBacen");
+		URL wsdlURL = new URL(BacenUtil.consultarURLBacen(configuracoesPlugin));
 		Scr2WebService ss = new Scr2WebService(wsdlURL, Constants.SERVICE_NAME);
 		IScr2WebService port = ss.getScr2WebPort();
 		String cpfCnpj = (String) hashIn.get("CPFCNPJ");
 		String tipoCliente = (String) hashIn.get("TIPOCLIENTE");
 		String dataBase = (String) hashIn.get("DATABASE");
 		String autorizacao = (String) hashIn.get("AUTORIZACAO");
-		LOGGER.debug("<<-- consumirWebServiceBacen");
+		LOGGER.info("<<-- consumirWebServiceBacen");
 		return port.getResumoDoCliente(cpfCnpj, tipoCliente, dataBase, autorizacao);
 	}
 
 	/**
+	 * Montar hashOut
+	 * @author rsdelia
 	 * @param hashOut
 	 * @param resumoDoCliente
 	 * @throws LayoutException
 	 */
 	private void tratarNegocio(HashMap<String, Object> hashOut, ResumoDoCliente resumoDoCliente) throws LayoutException {
-		// Montar hashOut
+
 		hashOut.put("DATABASECONSULTADA", resumoDoCliente.getDataBaseConsultada());
-		LOGGER.debug("DATABASECONSULTADA-->>" + resumoDoCliente.getDataBaseConsultada());
-
-		hashOut.put("TIPODOCLIENTE", resumoDoCliente.getTipoDoCliente());
-		LOGGER.debug("TIPODOCLIENTE-->>" + resumoDoCliente.getTipoDoCliente());
-
-		hashOut.put("CODIGODOCLIENTE", resumoDoCliente.getCodigoDoCliente());
-		LOGGER.debug("CODIGODOCLIENTE-->>" + resumoDoCliente.getCodigoDoCliente());
-
-		hashOut.put("CNPJDAIFSOLICITANTE", resumoDoCliente.getCnpjDaIFSolicitante());
-		LOGGER.debug("CNPJDAIFSOLICITANTE-->>" + resumoDoCliente.getCnpjDaIFSolicitante());
-
-		hashOut.put("COOBRIGACAOASSUMIDA", resumoDoCliente.getCoobrigacaoAssumida().doubleValue());
-		LOGGER.debug("COOBRIGACAOASSUMIDA-->>" + resumoDoCliente.getCoobrigacaoAssumida().doubleValue());
-
-		hashOut.put("COOBRIGACAORECEBIDA", resumoDoCliente.getCoobrigacaoRecebida().doubleValue());
-		LOGGER.debug("COOBRIGACAORECEBIDA-->>" + resumoDoCliente.getCoobrigacaoRecebida().doubleValue());
-
-		String DataInicio = resumoDoCliente.getDataInicioRelacionamento();
-
-		hashOut.put("DATAINICIORELACIONAMENTO", DataInicio);
-		LOGGER.debug("DATAINICIORELACIONAMENTO-->>" + resumoDoCliente.getDataInicioRelacionamento());
-
-		hashOut.put("PERCENTUALDOCUMENTOSPROCESSADOS", resumoDoCliente.getPercentualDocumentosProcessados());
-		LOGGER.debug("PERCENTUALDOCUMENTOSPROCESSADOS-->>" + resumoDoCliente.getPercentualDocumentosProcessados());
-
-		hashOut.put("PERCENTUALVOLUMEPROCESSADO", resumoDoCliente.getPercentualVolumeProcessado());
-		LOGGER.debug("PERCENTUALVOLUMEPROCESSADO-->>" + resumoDoCliente.getPercentualVolumeProcessado());
-
-		hashOut.put("QUANTIDADEDEINSTITUICOES", resumoDoCliente.getQuantidadeDeInstituicoes());
-		LOGGER.debug("QUANTIDADEDEINSTITUICOES-->>" + resumoDoCliente.getQuantidadeDeInstituicoes());
-
-		hashOut.put("QUANTIDADEDEOPERACOES", resumoDoCliente.getQuantidadeDeOperacoes());
-		LOGGER.debug("QUANTIDADEDEOPERACOES-->>" + resumoDoCliente.getQuantidadeDeOperacoes());
-
-		hashOut.put("QUANTIDADEOPERACOESDISCORDANCIA", resumoDoCliente.getQuantidadeOperacoesDiscordancia());
-		LOGGER.debug("QUANTIDADEOPERACOESDISCORDANCIA-->>" + resumoDoCliente.getQuantidadeOperacoesDiscordancia());
-
-		hashOut.put("QUANTIDADEOPERACOESSUBJUDICE", resumoDoCliente.getQuantidadeOperacoesSubJudice());
-		LOGGER.debug("QUANTIDADEOPERACOESSUBJUDICE-->>" + resumoDoCliente.getQuantidadeOperacoesSubJudice());
-
-		hashOut.put("RESPONSABILIDADETOTALDISCORDANCIA", resumoDoCliente.getResponsabilidadeTotalDiscordancia().doubleValue());
-		LOGGER.debug("RESPONSABILIDADETOTALDISCORDANCIA-->>" + resumoDoCliente.getResponsabilidadeTotalDiscordancia().doubleValue());
-
-		hashOut.put("RESPONSABILIDADETOTALSUBJUDICE", resumoDoCliente.getResponsabilidadeTotalSubJudice().doubleValue());
-		LOGGER.debug("RESPONSABILIDADETOTALSUBJUDICE-->>" + resumoDoCliente.getResponsabilidadeTotalSubJudice().doubleValue());
-
-		hashOut.put("RISCOINDIRETOVENDOR", resumoDoCliente.getRiscoIndiretoVendor().doubleValue());
-		LOGGER.debug("RISCOINDIRETOVENDOR-->>" + resumoDoCliente.getRiscoIndiretoVendor().doubleValue());
+		LOGGER.info("DATABASECONSULTADA-->>" + resumoDoCliente.getDataBaseConsultada());
+		LOGGER.info("TIPODOCLIENTE-->>" + resumoDoCliente.getTipoDoCliente());
+		LOGGER.info("CODIGODOCLIENTE-->>" + resumoDoCliente.getCodigoDoCliente());
+		LOGGER.info("CNPJDAIFSOLICITANTE-->>" + resumoDoCliente.getCnpjDaIFSolicitante());
+		LOGGER.info("COOBRIGACAOASSUMIDA-->>" + resumoDoCliente.getCoobrigacaoAssumida().doubleValue());
+		LOGGER.info("COOBRIGACAORECEBIDA-->>" + resumoDoCliente.getCoobrigacaoRecebida().doubleValue());
+		LOGGER.info("DATAINICIORELACIONAMENTO-->>" + resumoDoCliente.getDataInicioRelacionamento());
+		LOGGER.info("PERCENTUALDOCUMENTOSPROCESSADOS-->>" + resumoDoCliente.getPercentualDocumentosProcessados());
+		LOGGER.info("PERCENTUALVOLUMEPROCESSADO-->>" + resumoDoCliente.getPercentualVolumeProcessado());
+		LOGGER.info("QUANTIDADEDEINSTITUICOES-->>" + resumoDoCliente.getQuantidadeDeInstituicoes());
+		LOGGER.info("QUANTIDADEDEOPERACOES-->>" + resumoDoCliente.getQuantidadeDeOperacoes());
+		LOGGER.info("QUANTIDADEOPERACOESDISCORDANCIA-->>" + resumoDoCliente.getQuantidadeOperacoesDiscordancia());
+		LOGGER.info("QUANTIDADEOPERACOESSUBJUDICE-->>" + resumoDoCliente.getQuantidadeOperacoesSubJudice());
+		LOGGER.info("RESPONSABILIDADETOTALDISCORDANCIA-->>" + resumoDoCliente.getResponsabilidadeTotalDiscordancia().doubleValue());
+		LOGGER.info("RESPONSABILIDADETOTALSUBJUDICE-->>" + resumoDoCliente.getResponsabilidadeTotalSubJudice().doubleValue());
+		LOGGER.info("RISCOINDIRETOVENDOR-->>" + resumoDoCliente.getRiscoIndiretoVendor().doubleValue());
 
 		List<BcMsgRetorno> listaMensagensBcMsgRetorno = resumoDoCliente.getListaDeMensagensDeValidacao();
 
 		Boolean erroBacen = Boolean.FALSE;
 		
 		if (listaMensagensBcMsgRetorno.size() > 0) {
-			LOGGER.debug("Lista de Mensagens de Validacao (" + resumoDoCliente.getListaDeMensagensDeValidacao().size() + "):");
+			LOGGER.info("Lista de Mensagens de Validacao (" + resumoDoCliente.getListaDeMensagensDeValidacao().size() + "):");
 			erroBacen = Boolean.TRUE;
 		} else {
-			LOGGER.debug("Nao ha Mensagens de Validacao");
+			LOGGER.info("Nao ha Mensagens de Validacao");
 		}
 
 		String mensagensBacen = "";
 
 		for (BcMsgRetorno mensagem : listaMensagensBcMsgRetorno) {
 			mensagensBacen = mensagensBacen + mensagem.getCodigo() + "-" + mensagem.getMensagem() + "/";
-			LOGGER.debug("Codigo-->>" + mensagem.getCodigo());
-			LOGGER.debug("Mensagem-->" + mensagem.getMensagem());
+			LOGGER.info("Codigo-->>" + mensagem.getCodigo());
+			LOGGER.info("Mensagem-->" + mensagem.getMensagem());
 		}
 
 		// Resumo das operacoes
 		List<ResumoDaOperacao> listaDeResumoDasOperacoes = resumoDoCliente.getListaDeResumoDasOperacoes();
 
 		for (ResumoDaOperacao resumoOperacao : listaDeResumoDasOperacoes) {
-			LOGGER.debug("Modalidade-->>" + resumoOperacao.getModalidade());
-			LOGGER.debug("Varivacao Cambial-->>" + resumoOperacao.getVariacaoCambial());
+			LOGGER.info("Modalidade-->>" + resumoOperacao.getModalidade());
+			LOGGER.info("Varivacao Cambial-->>" + resumoOperacao.getVariacaoCambial());
 
 			for (ResumoDoVencimento resumoDoVencimento : resumoOperacao.getListaDeVencimentos()) {
-				LOGGER.debug("Codigo Vencimento-->>" + resumoDoVencimento.getCodigoVencimento());
-				LOGGER.debug("Valor Vencimento-->> " + resumoDoVencimento.getValorVencimento());
+				LOGGER.info("Codigo Vencimento-->>" + resumoDoVencimento.getCodigoVencimento());
+				LOGGER.info("Valor Vencimento-->> " + resumoDoVencimento.getValorVencimento());
 			}
 		}
 

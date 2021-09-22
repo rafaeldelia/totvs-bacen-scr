@@ -2,7 +2,6 @@ package br.com.totvs.plugins.bacen.utils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
@@ -44,12 +43,14 @@ public final class BacenUtil {
 			String autorizacao = (String) hashIn.get("AUTORIZACAO");
 			String userSisbacen = (String) hashIn.get("USUARIOSISBACEN");
 			String passwordSisbacen = (String) hashIn.get("SENHASISBACEN");
+			String cnpjIF = (String) hashIn.get("CNPJIF");
 			LOGGER.debug("cpfCnpj [" + cpfCnpj + "]");
 			LOGGER.debug("tipoCliente [" + tipoCliente + "]");
 			LOGGER.debug("dataBase [" + dataBase + "]");
 			LOGGER.debug("autorizacao [" + autorizacao + "]");
-			LOGGER.debug("User [" + userSisbacen + "]");
-			LOGGER.debug("Password [" + passwordSisbacen + "]");
+			LOGGER.debug("userSisbacen [" + userSisbacen + "]");
+			LOGGER.debug("passwordSisbacen [" + passwordSisbacen + "]");
+			LOGGER.debug("cnpjIf [" + cnpjIF + "]");
 
 			if (Util.isNullOrEmpty(cpfCnpj)) {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'CPFCNPJ' nos campos de entrada");
@@ -63,6 +64,8 @@ public final class BacenUtil {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'USUARIOSISBACEN' nos campos de entrada");
 			} else if (Util.isNullOrEmpty(passwordSisbacen)) {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'SENHASISBACEN' nos campos de entrada");
+			} else if (Util.isNullOrEmpty(cnpjIF)) {
+				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'CNPJIF' nos campos de entrada");
 			}
 			LOGGER.debug("<<--validarParametrosEntrada");
 		} else {
@@ -78,9 +81,9 @@ public final class BacenUtil {
 	 * @throws ConfigException
 	 * @see Localizacao do WSDL que pode ser homologacao ou producao
 	 */
-	public static String consultarURLBacen(Properties pArquivo) throws ConfigException {
+	public static String consultarURLBacen(HashMap<String, Object> configuracoesPlugin) throws ConfigException {
 		LOGGER.debug("-->>consultarURLBacen");
-		String surlWsdl = pArquivo.getProperty(Constants.BACENSCR_WSDL);
+		String surlWsdl = (String) configuracoesPlugin.get(Constants.BACENSCR_WSDL);
 		if (Util.isNullOrEmpty(surlWsdl)) {
 			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_WSDL + " no aquivo de propriedades'");
 		}
@@ -108,12 +111,18 @@ public final class BacenUtil {
 		String tipoCliente = (String) hashIn.get("TIPOCLIENTE");
 		String dataBase = (String) hashIn.get("DATABASE");
 		String autorizacao = (String) hashIn.get("AUTORIZACAO");
+		String userSisbacen = (String) hashIn.get("USUARIOSISBACEN");
+		String passwordSisbacen = (String) hashIn.get("SENHASISBACEN");
+		String cnpjIf = (String) hashIn.get("CNPJIF");
 
 		HashMap<String, Object> hashRequisicao = new HashMap<String, Object>();
 		hashRequisicao.put("codigoDoCliente", cpfCnpj);
 		hashRequisicao.put("dataBaseConsultada", dataBase);
 		hashRequisicao.put("tipoDoCliente", tipoCliente);
 		hashRequisicao.put("autorizacao", autorizacao);
+		hashRequisicao.put("userSisbacen", userSisbacen);
+		hashRequisicao.put("passwordSisbacen", passwordSisbacen);
+		hashRequisicao.put("cnpjIf", cnpjIf);
 		xStream.alias("map", java.util.Map.class);
 		String xmlChamadaSisbacen = xStream.toXML(hashRequisicao);
 		LOGGER.debug(xmlChamadaSisbacen);
