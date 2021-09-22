@@ -9,7 +9,7 @@
 	<!-- esse deverah ser sufixo para ser acrescentado ao nome -->
 	<!-- vindo da politica, entao irei buscar na hash da politica -->
 	<!-- hash.getKey(cpfcnpj); um de/para para os elementos -->
-	<nome_acesso>bacen_scr</nome_acesso>
+	<nome_acesso>bacen-scr</nome_acesso>
 
 	<!-- contem os dados necessarios para entrada no SisbacenScr -->
 	<entrada>
@@ -19,6 +19,8 @@
 		<field description="Data Base da Consulta YYYY-MM" type="String" format="">DATABASE</field>
 		<field description="Usuário SISBACEN" type="String" format="">USUARIOSISBACEN</field>
 		<field description="Senha SISBACEN" type="String" format="">SENHASISBACEN</field>
+		<field description="Autorização" type="String" format="">AUTORIZACAO</field>
+		<field description="Cnpj Instituição Financeira" type="String" format="">CNPJIF</field>
 	</entrada>
 
 	<!-- contem todas as saidas disponiveis pelo sisbacenscr -->
@@ -26,22 +28,7 @@
 	<!-- abaixo sofrerah um looping baseado nesse counter -->
 	<saida id="resumoDoCliente" counter="">
 		<!-- esses dois atributos nao entrarao no looping -->
-		<register description="Data Base Consultada" type="String" format="">DATABASECONSULTADA</register>
-		<register description="Tipo do Cliente" type="String" format="">TIPODOCLIENTE</register>                                                           
-		<register description="Codigo do Cliente" type="String" format="">CODIGODOCLIENTE</register>                                                        
-		<register description="Cnpj da IF Solicitante" type="String" format="">CNPJDAIFSOLICITANTE</register>                                             
-		<register description="Coobrigacao Assumida" type="Double" format="">COOBRIGACAOASSUMIDA</register>                                             
-		<register description="Coobrigacao Recebida" type="Double" format="">COOBRIGACAORECEBIDA</register>                                             
-		<register description="Data Inicio Relacionamento" type="String" format="">DATAINICIORELACIONAMENTO</register>                                    
-		<register description="Percentual Documentos Processados" type="String" format="">PERCENTUALDOCUMENTOSPROCESSADOS</register>                        
-		<register description="Percentual Volume Processado" type="String" format="">PERCENTUALVOLUMEPROCESSADO</register>                              
-		<register description="Quantidade De Instituicoes" type="Integer" format="">QUANTIDADEDEINSTITUICOES</register>                                    
-		<register description="Quantidade De Operacoes" type="Integer" format="">QUANTIDADEDEOPERACOES</register>                                           
-		<register description="Quantidade Operacoes Discordancia" type="Integer" format="">QUANTIDADEOPERACOESDISCORDANCIA</register>     
-		<register description="Quantidade Operacoes SubJudice" type="Integer" format="">QUANTIDADEOPERACOESSUBJUDICE</register>                            
-		<register description="Responsabilidade Total Discordancia" type="Double" format="">RESPONSABILIDADETOTALDISCORDANCIA</register>                   
-		<register description="Responsabilidade Total SubJudice" type="Double" format="">RESPONSABILIDADETOTALSUBJUDICE</register>                      
-		<register description="Risco Indireto Vendor" type="Double" format="">RISCOINDIRETOVENDOR</register>                                             
+		<register description="Data Base Consultada" type="String" format="">DATABASECONSULTADA</register>                                          
 	</saida>
 	
 </root>
