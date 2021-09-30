@@ -1,7 +1,15 @@
 package br.com.totvs.plugins.bacen.utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -10,8 +18,8 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import br.com.totvs.exceptions.ConfigException;
 import br.com.totvs.exceptions.LayoutException;
+import br.com.totvs.plugins.bacen.Response;
 import br.com.totvs.plugins.bacen.constants.Constants;
-import br.gov.bcb.scr2.operacional.webservice.ResumoDoCliente;
 
 /**
  * Classe utilitária do Bacen SCR
@@ -58,10 +66,10 @@ public final class BacenUtil {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'TIPOCLIENTE' nos campos de entrada");
 			} else if (Util.isNullOrEmpty(dataBase)) {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'DATABASE' nos campos de entrada");
-			} else if (Util.isNullOrEmpty(autorizacao)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'AUTORIZACAO' nos campos de entrada");
 			} else if (Util.isNullOrEmpty(userSisbacen)) {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'USUARIOSISBACEN' nos campos de entrada");
+			} else if (Util.isNullOrEmpty(autorizacao)) {
+				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'AUTORIZACAO' nos campos de entrada");
 			} else if (Util.isNullOrEmpty(passwordSisbacen)) {
 				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'SENHASISBACEN' nos campos de entrada");
 			} else if (Util.isNullOrEmpty(cnpjIF)) {
@@ -81,11 +89,12 @@ public final class BacenUtil {
 	 * @throws ConfigException
 	 * @see Localizacao do WSDL que pode ser homologacao ou producao
 	 */
-	public static String consultarURLBacen(HashMap<String, Object> configuracoesPlugin) throws ConfigException {
+	public static String consultarURLBacen(Map<String, String> configuracoesPlugin) throws ConfigException {
 		LOGGER.debug("-->>consultarURLBacen");
 		String surlWsdl = (String) configuracoesPlugin.get(Constants.BACENSCR_WSDL);
+		LOGGER.debug("-->>consultarURLBacen");
 		if (Util.isNullOrEmpty(surlWsdl)) {
-			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_WSDL + " no aquivo de propriedades'");
+			throw new ConfigException("Nao encontrou variavel '" + Constants.BACENSCR_WSDL + " no aquivo bacen-scr.json'");
 		}
 		LOGGER.debug("URL Wsdl Bacen [" + surlWsdl + "]");
 		LOGGER.debug("<<--consultarURLBacen");
@@ -103,7 +112,7 @@ public final class BacenUtil {
 	 *            da consulta ao web service
 	 */
 	public static void popularXMLEnvioRetorno(Map<String, Object> hashIn, HashMap<String, Object> hashOut,
-			ResumoDoCliente resumoDoCliente) {
+			Response resumoDoCliente) {
 		LOGGER.debug("-->> popularXMLEnvioRetorno");
 		XStream xStream = new XStream(new DomDriver());
 
@@ -135,5 +144,63 @@ public final class BacenUtil {
 			hashOut.put("LPT__PLUGIN_RETORNO", xmlRetornoSisbacen);
 		}
 		LOGGER.debug("<<--popularXMLEnvioRetorno");
+	}
+
+	/**
+	 * 
+	 * @param userSisbacen
+	 * @param passwordSisbacen
+	 * @return
+	 */
+	public static String concatenarUsuarioSenha(String userSisbacen, String passwordSisbacen) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(userSisbacen);
+		sb.append(":");
+		sb.append(passwordSisbacen);
+		return sb.toString();
+	}
+
+	/**
+	 * @return
+	 */
+	public static String getToken(String userSisbacen, String passwordSisbacen) {
+		return Base64.getEncoder().encodeToString(BacenUtil.concatenarUsuarioSenha(userSisbacen, passwordSisbacen).getBytes());
+	}
+	
+
+
+	/**
+	 * @param inputStream
+	 * @return
+	 * @throws IOException
+	 */
+	public static String tratarXMLRespostaBacen(InputStream inputStream) throws IOException {
+		String xmlResposta = Constants.EMPTY;
+        if (null != inputStream) {
+        	xmlResposta = new BufferedReader(new InputStreamReader(inputStream))
+        		    .lines().parallel().collect(Collectors.joining("\n"));
+	        //xmlResposta = IOUtils.toString(inputStream, "ISO-8859-1");
+        }        
+		Pattern p2 = Pattern.compile("<return>(.*?)</return>"); 
+		Matcher m2 = p2.matcher(xmlResposta);		
+		while (m2.find()) {
+			xmlResposta = "<return>" + m2.group(1) + "</return>";
+		}
+		return xmlResposta;
+	}
+
+	/**
+	 * @author rsdelia
+	 * @param hashIn
+	 * @return String
+	 */
+	public static String popularParametroIn(Map<String, Object> hashIn) {
+		String cpfCnpj = (String) hashIn.get("CPFCNPJ");
+		String tipoCliente = (String) hashIn.get("TIPOCLIENTE");
+		String dataBase = (String) hashIn.get("DATABASE");
+		String autorizacao = (String) hashIn.get("AUTORIZACAO");
+		String cnpjIF = (String) hashIn.get("CNPJIF");
+		return "?codCliente=" + cpfCnpj + "&tpCliente=" + tipoCliente + "&dataBase=" + dataBase + "&autorizacao=" + autorizacao + "&cnpjIF="
+				+ cnpjIF;
 	}
 }

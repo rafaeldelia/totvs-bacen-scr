@@ -50,6 +50,19 @@
 		],
 		"out": [
 			{
+				"id": "DATA_BASE_SISBACEN",
+				"counter": 0,
+				"counter_max": 0,
+				"register": [
+					{
+						"description": "Data Base Sisbacen",
+						"type": "String",
+						"format": "",
+						"name": "DATA_BASE_SISBACEN"
+					}
+				]
+			},
+			{
 				"id": "VENCIDO",
 				"counter": 0,
 				"counter_max": 0,
@@ -71,37 +84,62 @@
 						"description": "Valor a Vencer ate 30 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ATE_30"
+						"name": "VLR_ATE_30_DIAS"
 					},
 					{
 						"description": "Valor a Vencer ate 60 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ATE_60"
+						"name": "VLR_ATE_60_DIAS"
 					},
 					{
 						"description": "Valor a Vencer ate 90 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ATE_90"
+						"name": "VLR_ATE_90_DIAS"
 					},
 					{
 						"description": "Valor a Vencer ate 180 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ATE_180"
+						"name": "VLR_ATE_180_DIAS"
 					},
 					{
 						"description": "Valor a Vencer ate 360 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ATE_360"
+						"name": "VLR_ATE_360_DIAS"
 					},
 					{
 						"description": "Valor a Vencer acima 360 dias",
 						"type": "Double",
 						"format": "",
-						"name": "VLR_ACIMA_360"
+						"name": "VLR_ACIMA_360_DIAS"
+					}
+				]
+			},
+			{
+				"id": "LUCROS_PERDAS",
+				"counter": 0,
+				"counter_max": 0,
+				"register": [
+					{
+						"description": "Valor a Lucro e Perdas ate 30 dias",
+						"type": "Double",
+						"format": "",
+						"name": "VLR_ATE_24_MESES"
+					},
+					{
+						"description": "Valor a Lucro e Perdas ate 60 dias",
+						"type": "Double",
+						"format": "",
+						"name": "VLR_ATE_48_MESES"
+					},
+					{
+						"description": "Valor a Lucro e Perdas acima 48 meses",
+						"type": "Double",
+						"format": "",
+						"name": "VLR_ACIMA_48_MESES"
 					}
 				]
 			}
@@ -111,10 +149,6 @@
 		"bacenscr.truststore": "bacen.jks",
 		"bacenscr.truststoretype": "jks",
 		"bacenscr.truststorepassword": "tools01",
-		
-		"bacenscr.wsdl": "https://www9.bcb.gov.br/wsscr2/ControleCliente_homologa.xml",
-		"user.jkspwd": "lVaxvlqeVH5ugq/rba5vYvSWhu8kYJqO3Q==O63WLqgqpA==",
-		"user.root": "/Homologa/consultahttps",
-		"user.url": "sitenethomologa.serasa.com.br"
+		"bacenscr.wsdl": "https://scr.bcb.gov.br/wsscr/services/Scr2WebService/getResumoDoCliente"
 	}
 }

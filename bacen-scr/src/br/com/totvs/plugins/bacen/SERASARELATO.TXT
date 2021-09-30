@@ -1,0 +1,278 @@
+package br.com.totvs.plugins.serasa;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.totvs.exceptions.ConfigException;
+import br.com.totvs.exceptions.InfraException;
+import br.com.totvs.exceptions.LayoutException;
+import br.com.totvs.plugins.PluginConfig;
+import br.com.totvs.plugins.PluginInterface;
+import br.com.totvs.plugins.serasa.https.SerasaHttpsComponent;
+import br.com.totvs.plugins.serasa.util.SerasaUtil;
+import br.com.totvs.plugins.util.UtilPlugin;
+
+/**
+ * @brief Classe de acesso ao SERASA-RELATO
+ * @author ccsilva
+ * @author ricart.monachesi
+ * 
+ */
+//public class SerasaRelato implements Acesso {
+public class SerasaRelato implements PluginInterface {
+
+	/**
+	 * @param <hashIn>
+	 * @brief Pega o nome do Acesso; especializado em pegar o nome do acesso
+	 * @param hashIn
+	 */
+	public Map<String, Object> execute(Map<String, Object> hashIn) throws InfraException, LayoutException, ConfigException {
+		// definicao de contextos locais para logging
+		Logger logger = SerasaUtil.getLogger();
+		logger.debug(">> execute()");
+
+		// Armazena os dados de login no serasa
+		StringBuffer serasaLogin = new StringBuffer("");
+		// Armazena os dados que serao passados para o serasa
+		StringBuffer serasaRequest = new StringBuffer("");
+		// hashtable para retornar os registros formatados <K,V>
+		HashMap<String, Object> hashOut = new HashMap<String, Object>();
+		// Classe de utilidades serasa
+		SerasaUtil serUtil = new SerasaUtil();
+		// tamanho do filler de finalizacao
+		int sizeFiller = 115;
+
+		// monta um header de login baseado nas propriedades do plugin
+		HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("serasa_relato");
+		String jsonOut = (String) configuracoesPlugin.get("properties");
+		ObjectMapper mapper = new ObjectMapper();
+		HashMap<String, String> pluginProperties;
+		try {
+			pluginProperties = mapper.readValue(jsonOut, new TypeReference<Map<String,String>>(){});
+			serUtil.fillerLoginSerasa(pluginProperties, serasaLogin);
+		} catch (IOException e) {
+			logger.error(e);
+			throw new LayoutException("Erro no Filling do login SERASA-RELATO");
+		} catch (Exception e1) {
+			logger.error(e1);
+			throw new LayoutException("Erro no Filling do login SERASA-RELATO");
+		}
+
+		// Executo as validacoes do que foi fornecido pelo usuario
+		executaValidacoesEntrada(hashIn);
+
+		// Tratamento de cara resource. No caso da SERASA  
+		@SuppressWarnings("unchecked")
+		ArrayList<Object> resources = (ArrayList<Object>) configuracoesPlugin.get("resources");
+		for (Object object : resources) {
+			try {
+				
+				@SuppressWarnings("unchecked")
+				Map<String, Object> resourceMap = (Map<String, Object>) object;
+
+				String jsonProp = mapper.writeValueAsString(resourceMap);
+				ResourcesSerasa serasaResource = mapper.readValue(jsonProp, ResourcesSerasa.class);
+				
+				switch (serasaResource.getResource().getName()) {
+				case "B49C": // monta o buffer de request para o SERASA
+				case "P002": // Registro P002 - Outras Opcoes de Consulta (Pessoa Juridica) Credit Bureau Scoring II
+					try {
+						serUtil.buildLayoutJson(serasaResource.getResource().getFields(), serasaRequest, hashIn);
+						
+					} catch (Exception e) {
+						logger.error(e);
+						throw new LayoutException("Erro no preenchimento do " +  serasaResource.getResource().getName());
+					}
+					break;
+					
+				default:
+					break;
+				}
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				logger.debug(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		
+		// P009 - Monitore / Gerencie PJ
+		Integer buildP009 = 0; // Default eh nao enviar
+		buildP009 = hashIn.containsKey("P009_FL_HABILITA") ? Integer.parseInt(hashIn.get("P009_FL_HABILITA").toString()) : 0;
+
+		if (buildP009 == 1) {
+			try {
+				serUtil.fillerLayoutP009(serasaRequest, hashIn);
+			} catch (Exception e) {
+				logger.error(e); // deve conter: QTDE_DIAS_MONITORAMENTO: Somente 030, 060, 090, 120 ou IND
+				throw new LayoutException("Erro no 'layout_P009': " + e.getMessage());
+			}
+		}
+
+		// Identificador de FIM de dados de envio
+		// Devido a ser um registro fixo, nao houve necessidade de inclui-lo no layout
+		serasaRequest.append(UtilPlugin.stringFiller("T999", sizeFiller, "S"));
+		logger.debug(">>envio serasa: [" + serasaLogin + serasaRequest + "]");
+		// cria contexto de consulta ao SERASA usando https WSDL
+		SerasaHttpsComponent consultaHttps = new SerasaHttpsComponent();
+		String retornoSerasa = null;
+		// monta hash de saida, baseado na string de retorno do SERASA
+		// @formatter:off
+
+		InputStream streamJks = (InputStream) configuracoesPlugin.get("jks");
+		
+		try {
+			retornoSerasa = consultaHttps.acessoSerasaHttpsComponent(pluginProperties, streamJks, serasaLogin.toString() + serasaRequest.toString());
+			hashOut = serUtil.builderHashOut(retornoSerasa);
+		} catch (Exception e) {
+			logger.error("Erro no acesso ao SERASA-RELATO", e);
+			throw new InfraException("Erro no acesso ao SERASA-RELATO: " + e.getMessage());
+		}
+		// @formatter:on
+		
+		hashOut.put("LPT__PLUGIN_ENVIO", serasaRequest.toString());
+		hashOut.put("LPT__PLUGIN_RETORNO", retornoSerasa);
+		
+		logger.debug("<< execute()");
+
+		// retorna a hash preenchida
+		return hashOut;
+	}
+
+	/**
+	 * Executa as validacoes do layout, para ter (quase)certeza de nao enviar solicitacoes erradas.
+	 * 
+	 * @param hashIn
+	 *            HashMap com os dados fornecidos na entrada
+	 * @throws LayoutException
+	 */
+	private void executaValidacoesEntrada(Map<String, Object> hashIn) throws LayoutException {
+		// Pega a chave para consulta simples; tem que ser "B49C_NUM_DOC" e representa o CNPJ da empresa
+		String sCNPJ = (String) hashIn.get("B49C_NUM_DOC");
+		if (sCNPJ == null)
+			throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'B49C_NUM_DOC' nos campos de entrada");
+
+		String chave1 = (String) hashIn.get("P002_CHAVE1");
+		// Verifica se a chave 1 esta preenchida, se estiver tenho que validar...validacao e meio idiota, mas funciona.
+		// Se nao estiver preenchido o xml se encarrega de colocar um Q como padrao.
+//		if (chave1 != null && !"".equals(chave1)) {
+//			int totalValidCharacters = 0;
+//			// Foolproofing...
+//			chave1 = chave1.trim();
+//			chave1 = chave1.toUpperCase();
+//			if (chave1.contains("Q"))
+//				totalValidCharacters++;
+//			if (chave1.contains("P"))
+//				totalValidCharacters++;
+//			if (chave1.contains("R"))
+//				totalValidCharacters++;
+//			if (chave1.length() != totalValidCharacters) {
+//				throw new LayoutException("Erro: A chave do Relato possui caracteres invalidos.");
+//			}
+//		}
+
+		// Feio, mas estao todas as modalidades ai...como elas sao especificas para esse, caso nao tem tanto problema fazer assim...
+		// Por falta de tempo e por ser meio desnecessario, vai ficar assim mesmo mesmo.
+		String todasModalidades = "AD, AG, AL, AR, AV, C1, C2, C3, C4, C5, C6, CA, CB, CC, CD, CH, CO, CP, CQ, CR, CS, CT, CV, DB, DC, DE, DP, DV, EC, EE, EG, EF, FG,"
+				+ " FI, HO, IE, IM, ME, NF, OA, OJ, OO, OU, RC, RE, RR, SA, SB, SE, SF, SG, SO, SQ, SR, SS, ST, SV, TC, TD, TE, TF, TI, TM, TP, TR, TT, VL, VM, VP";
+		String modalidade = (String) hashIn.get("B49C_MODALIDADE");
+		// Foolproofing...
+		if (modalidade != null && !"".equals(modalidade)) {
+			modalidade = modalidade.trim();
+			modalidade = modalidade.toUpperCase();
+			if (!todasModalidades.contains(modalidade)) {
+				throw new LayoutException("Erro: A modalidade escolhida e invalida.");
+			}
+		}
+
+		String periodoCompro = (String) hashIn.get("B49C_PERIODO_COMPRO");
+		int numPeriodo;
+		if (periodoCompro != null && !"".equals(periodoCompro)) {
+			// Foolproofing...
+			periodoCompro = periodoCompro.trim();
+			try {
+				numPeriodo = Integer.parseInt(periodoCompro);
+				if (numPeriodo < 1 || numPeriodo > 9) {
+					throw new LayoutException("Erro: O periodo de visualizacao de compromissos nao esta dentro do intervalo valido(1-9).");
+				}
+			} catch (NumberFormatException nfe) {
+				throw new LayoutException("Erro: O periodo de visualizacao de compromissos nao e um numero.");
+			}
+		}
+
+		String periodoEndereco = (String) hashIn.get("B49C_PERIODO_ENDERECO");
+		if (periodoEndereco != null && !"".equals(periodoEndereco)) {
+			// Foolproofing...
+			periodoEndereco = periodoEndereco.trim();
+			try {
+				numPeriodo = Integer.parseInt(periodoEndereco);
+				if (numPeriodo < 1 || numPeriodo > 9) {
+					throw new LayoutException("Erro: O periodo de visualizacao de compromissos nao esta dentro do intervalo valido(1-9).");
+				}
+			} catch (NumberFormatException nfe) {
+				throw new LayoutException("Erro: O periodo de visualizacao de compromissos nao e um numero.");
+			}
+		}
+	}
+
+//	Favor nao deixar o bloco abaixo habilitado no CVS
+//	hashOut = serUtil
+//			.builderHashOut(
+//				    "R214AAAAAAAAAAAAAA1111SEG                                                                                          " +
+//			
+//				    "F900  019920120101       FRASE   EXPLICATIVA                                                                       "
+//				    
+//				  + "F900  0201      191444402 RAZAOSOCIAL DA EMPRESA                                       USUARIO      20120101083000 "
+//				  
+//				  + "F900  030220120101     777000120002012                                                                             "
+//				  
+//				  + "F900  040320120101       FRASE   EXPLICATIVA                                                                       " +
+//				  
+//					"R005                     MENSAGEM DE FALENCIA                                                                      " +
+//					
+//					"R10A                     HOME   PAGE   70 POSICOES                                                                 " +
+//					
+//					"R10J                    CODIGO DO SERASA                                                                           " +
+//					
+//					"R014        77720121201                                                                                            " +
+//					
+//					"R106        ===========PRINCIPAIS PRODUTOS==================                                                       " +
+//					
+//					"R11220121201B                                                                                                      " +
+//					
+//					"R119RAZAO   SOCIAL                                                        20120101 20121212                        " +
+//					
+//					"R125RAZAO   SOCIAL                                              12345678901                                        " +
+//					
+//					"R20020121312001                                                                                                    " +
+//					
+//					"R201JUL8807                                                                                                        " +
+//					
+//					"R010                     CONFIDENCIAL nao ABRA                  2012010108000030R$CONSTANTE01234567890142220121212O" +
+//					
+//					"R011                     NOME DO FORNECEDOR                               123456789444411SEG                       " +
+//					
+//					"R01200010002000300040005SEG0055                                                                                    " +
+//					
+//					"R013DESC PERIO REL   4SEG                                                                                          " +
+//					
+//					"R113F012345670010099        EMPRESA                                     LIGADA  S09                                " +
+//					
+//					"R116                                       RAZAO  SOCIAL   ST      99999ORGRJ  PR  RIO DE JANEIRO         001IR    " +
+//					
+//					"R198                                       ================MENSAGEM INFORMATIIIIIII20120101                        " +
+//					
+//					"R205DESCRICAOPERIO8807JUL         9999 100SEG                                                                      " +
+//					
+//					"T999001                             === NADA CONSTA PARA O CNPJ CONSULTADO ===                                     ");
+	
+	
+}

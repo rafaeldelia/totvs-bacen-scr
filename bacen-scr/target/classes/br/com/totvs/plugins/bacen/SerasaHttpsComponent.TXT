@@ -1,0 +1,179 @@
+package br.com.totvs.plugins.serasa.https;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.util.Map;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import br.com.totvs.cipher.Ciphering;
+import br.com.totvs.plugins.http.KeyStoreApi;
+import br.com.totvs.plugins.http.TrustManagerFactoryApi;
+import br.com.totvs.plugins.serasa.util.SerasaUtil;
+
+/**
+ * @brief Implementacao da classe de acesso ao WSDL do SERASA via HTTPS - conexao segura
+ * @author ricart.monachesi
+ *
+ */
+public class SerasaHttpsComponent {
+	// controle do fim de transmissao
+	private static final String SERASA_REGISTRO_T999 = "T999";
+
+	/**
+	 * 
+	 * @param propertiesDir
+	 * @param str
+	 * @return
+	 * @throws Exception
+	 */
+	public String acessoSerasaHttpsComponent(Map<String, String> properties, InputStream cofreJksInputStream, String str) throws Exception {
+		org.apache.log4j.Logger logger = SerasaUtil.getLogger();		
+		logger.debug( ">>SerasaHttpsImpl.SerasaHttps");
+
+//		https://www.programcreek.com/java-api-examples/?class=javax.net.ssl.SSLContext&method=init
+//		https://prasans.info/2014/06/making-https-call-using-apache-httpclient/
+		
+		String strRetorno = null;
+		StringBuffer strBufferRetorno = new StringBuffer();
+		
+		CloseableHttpClient closeableHttpClient = null;
+
+		try {
+			
+			String senhaCofreJKS = ((String) properties.get("user.jkspwd"));
+			
+			Ciphering cipher = new Ciphering();
+			char[] keystorepass = cipher.decripPassword(senhaCofreJKS).toCharArray();
+			
+			KeyStore keyStore = KeyStoreApi.initKeyStoreJKS("JKS", cofreJksInputStream, keystorepass);
+			
+			// Cria uma "trust manager"
+			TrustManager[] tm = TrustManagerFactoryApi.initTrustManager("PKIX", keyStore);
+			
+			// Inicializa um SSLContext
+			SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+			sslContext.init(null, tm, null);
+
+			// Inicializa o Socket
+			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+					sslContext, new String[] { "TLSv1.2" }, null, SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+                
+			// Inicializa um cliente HTTP
+			closeableHttpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+
+			final String url = (String) properties.get("user.url");
+			// defensive programming
+			if (url == null)
+				throw new Exception("A url de acesso ao SERASA nao foi informada nos parametros do sistema (user.url)");
+
+			logger.debug("Url do Serasa: [" + url + "]");
+                			
+			// Recuperando o username para ser reenviado caso a string nao esteja completa.
+			final String username = str.substring(0, str.indexOf("B49C"));
+			logger.debug("Username utilizado: [" + username + "]");
+			// Recuperando o T999 para ser reenviado caso a string nao esteja completa.
+			final String t999 = str.substring(str.indexOf(SERASA_REGISTRO_T999), str.length());
+			logger.debug("String enviada ao Serasa=[" + str + "]");
+			// controle das partes de retorno
+			int parte = 0;
+			// Parametro da Aplicacao.
+			final String path = (String) properties.get("user.root");
+			logger.debug("Root de acesso ao Serasa=[" + path + "]");
+			// deve existir um contexto pra acesso ao WSDL do SERASA
+			if (path == null)
+				throw new Exception("O root do contexto de acesso ao SERASA nao informado (user.root)");
+
+			CloseableHttpResponse response = null;
+			// loop de leitura
+			do {
+
+				// executa a transmissao/metodo
+				logger.debug("Executar a requisicao closeableHttpClient");
+
+				// importante! codifica a string para UTF-8
+				URIBuilder builder = new URIBuilder();
+				builder.setScheme("https").setHost(url).setPath(path).setParameter("p", str).setCharset(StandardCharsets.UTF_8);
+				URI uri = builder.build();
+				
+				HttpHost targetHostUrl = new HttpHost(url, 443, "https");
+                    				
+//                HttpRequest httpRequestGet = new HttpGet(uri);
+                HttpRequest httpRequestPost = new HttpPost(uri);
+
+                logger.debug("String enviada ao Serasa=[" + str + "]");
+                
+                // Executo a requisicao HTTP
+//                response = closeableHttpClient.execute(targetHostUrl, httpRequestGet);
+                response = closeableHttpClient.execute(targetHostUrl, httpRequestPost);
+                
+				// pega a string de retorno
+        		strRetorno = EntityUtils.toString(response.getEntity());
+
+        		logger.debug("Status response HTTP: " + response.getStatusLine());
+                logger.debug("Retorno do Serasa, Parte: " + ++parte + ", String: [" + strRetorno + "]");
+                logger.debug("Verifico se ocorreu erro no acesso ao Serasa");
+                    				
+                // Fix para casos em que o usuario ou senha do acesso estiver errado...
+                // Por alguma razao o SERASA nao segue o padrao de erros nesse caso.
+				if ("USUARIO/SENHA INVALIDO".equalsIgnoreCase(strRetorno.trim())) {
+					throw new Exception(strRetorno.trim());
+				}
+				// controle do fluxo de transmissao
+				if (strRetorno != null && strRetorno.length() > 7 && strRetorno.indexOf(SERASA_REGISTRO_T999) >= 0) {
+					if (!"000".equals(strRetorno.substring(strRetorno.indexOf(SERASA_REGISTRO_T999) + 4, strRetorno.indexOf(SERASA_REGISTRO_T999) + 7))) {
+						throw new Exception(strRetorno.substring(strRetorno.indexOf(SERASA_REGISTRO_T999)).trim());
+					}
+				}
+				// Fail safe caso o retorno esteja em um formato inesperado... 
+				if (strRetorno.length() < 400) {
+					if (strRetorno.indexOf(SERASA_REGISTRO_T999) != -1) {
+						throw new Exception(strRetorno.substring(strRetorno.indexOf(SERASA_REGISTRO_T999)).trim());
+					}
+					else {
+						logger.error("Layout em formato inesperado. Retorno: " + strRetorno);
+						throw new Exception("Erro de protocolo. O retorno nao esta no layout esperado.");
+					}
+				}
+                    				
+				// montagem da string de retorno
+				strBufferRetorno.append(strRetorno.substring(400, strRetorno.indexOf(SERASA_REGISTRO_T999)));
+				logger.debug("String total obtida no acesso ao Serasa. Parte: " + parte + ", String[" + strBufferRetorno.toString() + "]");
+				// Montado a string para ser reenviada.
+				str = username + strRetorno.substring(0, 399) + t999;
+			} while (strRetorno.toUpperCase().indexOf("STRING PARCIAL - HA MAIS REGISTROS A ENVIAR") > 0);
+                    			
+			logger.debug("Numero de acesso ao Serasa=[" + parte + "]");
+			logger.debug("String final retornada pelo Serasa=[" + strBufferRetorno.toString() + "]");
+            
+			response.close();
+			
+			// retorno a string 
+			String b49c = strRetorno.substring(0, 400); //concateno o b49c retornado no inicio
+			return b49c + strBufferRetorno.toString();
+			
+		} catch (Throwable t) {
+			logger.debug(t.getMessage());
+			throw new Exception(t);
+		} finally {
+        	if (closeableHttpClient != null)
+        		closeableHttpClient.close();
+        	logger.debug(">>SerasaHttpsImpl.acessoSerasaHttps");
+		}
+
+	}
+
+}
