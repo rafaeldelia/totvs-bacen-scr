@@ -61,30 +61,19 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 			BacenUtil.validarParametrosEntrada(hashIn);
 
-			HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("bacen-scr");
-
-			String jsonOut = (String) configuracoesPlugin.get("properties");
-
-			ObjectMapper mapper = new ObjectMapper();
-
-			Map<String, String> pluginProperties = mapper.readValue(jsonOut, new TypeReference<Map<String, String>>() {
-			});
-
 			this.validarAutenticacaoExecucao(hashIn);
 
-			Response retornoResumo = this.consumirWebServiceBacen(hashIn, pluginProperties);
+			BacenUtil.popularXMLEnvio(hashIn, hashOut);
+			
+			Response retornoResumo = this.consumirWebServiceBacen(hashIn);
 
 			if (retornoResumo == null) {
 
-				LOGGER.info(" retornoResumo null ");
-
-				throw new LayoutException("ERRO VAMOS VER 2");
+				throw new LayoutException("Web Service Bacen SCR retornou objeto null.");
 
 			} else {
 
-				LOGGER.info(" retornoResumo preenchido ");
-
-				BacenUtil.popularXMLEnvioRetorno(hashIn, hashOut, retornoResumo);
+				BacenUtil.popularXMLEnvioRetorno(hashOut, retornoResumo);
 
 				this.tratarNegocio(hashOut, retornoResumo);
 			}
@@ -132,10 +121,19 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		LOGGER.info("<<--validarAutenticacaoExecucao");
 	}
 
-	public Response consumirWebServiceBacen(Map<String, Object> hashIn, Map<String, String> configuracoesPlugin)
+	public Response consumirWebServiceBacen(Map<String, Object> hashIn)
 			throws UnmarshalException, IOException, NoSuchAlgorithmException, KeyManagementException, JAXBException, ConfigException {
 
 		LOGGER.info("-->> consumirWebServiceBacen");
+		
+		HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("bacen-scr");
+
+		String jsonOut = (String) configuracoesPlugin.get("properties");
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		Map<String, String> pluginProperties = mapper.readValue(jsonOut, new TypeReference<Map<String, String>>() {
+		});
 
 		HttpURLConnection connection = null;
 
@@ -147,7 +145,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		HttpsURLConnection.setDefaultHostnameVerifier(((HostnameVerifier) (String string, SSLSession ssls) -> true));
 
-		String url = BacenUtil.consultarURLBacen(configuracoesPlugin) + BacenUtil.popularParametroIn(hashIn);
+		String url = BacenUtil.consultarURLBacen(pluginProperties) + BacenUtil.popularParametroIn(hashIn);
 
 		LOGGER.info("url [" + url + "]");
 
@@ -166,16 +164,27 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		connection.setRequestProperty("Content-Type", "application/xml");
 
 		int responseCode = connection.getResponseCode();
+
 		InputStream inputStream;
+
 		if (200 <= responseCode && responseCode <= 299) {
+
 			inputStream = connection.getInputStream();
+
 		} else {
+
 			inputStream = connection.getErrorStream();
+
 		}
+
 		String xmlResposta = BacenUtil.tratarXMLRespostaBacen(inputStream);
+
 		JAXBContext context = JAXBContext.newInstance(Response.class);
+
 		Unmarshaller unmarshaller = context.createUnmarshaller();
+
 		LOGGER.info("<<-- consumirWebServiceBacen");
+
 		return (Response) unmarshaller.unmarshal(new StreamSource(new StringReader(xmlResposta.replaceAll("&", "e"))));
 	}
 
@@ -197,14 +206,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		hashOut.put("VLR_VENCIDO", 7777.44);
 
-		List<BcMsgRetorno> listaMensagensBcMsgRetorno = resumoDoCliente.getListaDeMensagensDeValidacao();
-
-		// retorna a exceção com o código concatenado com a mensagem de erro de validação
-		if (!Util.isNullOrEmpty(listaMensagensBcMsgRetorno)) {
-			LOGGER.info("Lista de Mensagens de Validacao [" + listaMensagensBcMsgRetorno.size() + "]");
-			throw new LayoutException(
-					listaMensagensBcMsgRetorno.get(0).getCodigo() + "-" + listaMensagensBcMsgRetorno.get(0).getMensagem());
-		}
+		this.tratarMensagemRetornoValidacao(resumoDoCliente);
 
 		// Resumo das operacoes
 		List<ResumoDaOperacao> listaDeResumoDasOperacoes = resumoDoCliente.getListaDeResumoDasOperacoes();
@@ -227,5 +229,19 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		}
 		LOGGER.info("<<--tratarNegocio_BRASIL");
+	}
+
+	/**
+	 * @param resumoDoCliente
+	 * @throws LayoutException
+	 */
+	private void tratarMensagemRetornoValidacao(Response resumoDoCliente) throws LayoutException {
+		List<BcMsgRetorno> listaMensagensBcMsgRetorno = resumoDoCliente.getListaDeMensagensDeValidacao();
+
+		if (!Util.isNullOrEmpty(listaMensagensBcMsgRetorno)) {
+			LOGGER.error("[" + listaMensagensBcMsgRetorno.toString() + "]");
+			throw new LayoutException("Código: [" + listaMensagensBcMsgRetorno.get(0).getCodigo() + "] - Mensagem Validação: ["
+					+ listaMensagensBcMsgRetorno.get(0).getMensagem() + "]");
+		}
 	}
 }

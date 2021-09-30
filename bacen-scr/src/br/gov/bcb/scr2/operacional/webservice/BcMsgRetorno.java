@@ -5,11 +5,12 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 
-
 /**
- * <p>Classe Java de bcMsgRetorno complex type.
+ * <p>
+ * Classe Java de bcMsgRetorno complex type.
  * 
- * <p>O seguinte fragmento do esquema especifica o conteudo esperado contido dentro desta classe.
+ * <p>
+ * O seguinte fragmento do esquema especifica o conteudo esperado contido dentro desta classe.
  * 
  * <pre>
  * &lt;complexType name="bcMsgRetorno">
@@ -27,61 +28,57 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "bcMsgRetorno", propOrder = {
-    "codigo",
-    "mensagem"
-})
+@XmlType(name = "bcMsgRetorno", propOrder = { "codigo", "mensagem" })
 public class BcMsgRetorno {
 
-    protected String codigo;
-    protected String mensagem;
+	protected String codigo;
+	protected String mensagem;
 
-    /**
-     * Obtem o valor da propriedade codigo.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getCodigo() {
-        return codigo;
-    }
+	/**
+	 * Obtem o valor da propriedade codigo.
+	 * 
+	 * @return possible object is {@link String }
+	 * 
+	 */
+	public String getCodigo() {
+		return codigo;
+	}
 
-    /**
-     * Define o valor da propriedade codigo.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setCodigo(String value) {
-        this.codigo = value;
-    }
+	/**
+	 * Define o valor da propriedade codigo.
+	 * 
+	 * @param value
+	 *            allowed object is {@link String }
+	 * 
+	 */
+	public void setCodigo(String value) {
+		this.codigo = value;
+	}
 
-    /**
-     * Obtem o valor da propriedade mensagem.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getMensagem() {
-        return mensagem;
-    }
+	/**
+	 * Obtem o valor da propriedade mensagem.
+	 * 
+	 * @return possible object is {@link String }
+	 * 
+	 */
+	public String getMensagem() {
+		return mensagem;
+	}
 
-    /**
-     * Define o valor da propriedade mensagem.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setMensagem(String value) {
-        this.mensagem = value;
-    }
+	/**
+	 * Define o valor da propriedade mensagem.
+	 * 
+	 * @param value
+	 *            allowed object is {@link String }
+	 * 
+	 */
+	public void setMensagem(String value) {
+		this.mensagem = value;
+	}
+
+	@Override
+	public String toString() {
+		return "BcMsgRetorno [codigo=" + codigo + ", mensagem=" + mensagem + "]";
+	}
 
 }

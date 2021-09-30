@@ -102,28 +102,23 @@ public final class BacenUtil {
 	}
 
 	/**
-	 * popular LPT__PLUGIN_ENVIO popular LPT__PLUGIN_RETORNO
+	 * popular LPT__PLUGIN_ENVIO 
 	 * 
 	 * @author rsdelia
 	 * @param hashIn
 	 * @param hashOut
-	 * @param resumoDoCliente
-	 *            Transformo os dados de entrada da consulta em XML para armazenar nas tabelas de auditoria Transformo os dados de retorno
-	 *            da consulta ao web service
+	 *            Transformo os dados de entrada da consulta em XML para armazenar nas tabelas de auditoria
 	 */
-	public static void popularXMLEnvioRetorno(Map<String, Object> hashIn, HashMap<String, Object> hashOut,
-			Response resumoDoCliente) {
-		LOGGER.debug("-->> popularXMLEnvioRetorno");
+	public static void popularXMLEnvio(Map<String, Object> hashIn, HashMap<String, Object> hashOut) {
+		LOGGER.debug("-->> popularXMLEnvio");
 		XStream xStream = new XStream(new DomDriver());
-
 		String cpfCnpj = (String) hashIn.get("CPFCNPJ");
 		String tipoCliente = (String) hashIn.get("TIPOCLIENTE");
 		String dataBase = (String) hashIn.get("DATABASE");
-		String autorizacao = (String) hashIn.get("AUTORIZACAO");
 		String userSisbacen = (String) hashIn.get("USUARIOSISBACEN");
 		String passwordSisbacen = (String) hashIn.get("SENHASISBACEN");
+		String autorizacao = (String) hashIn.get("AUTORIZACAO");
 		String cnpjIf = (String) hashIn.get("CNPJIF");
-
 		HashMap<String, Object> hashRequisicao = new HashMap<String, Object>();
 		hashRequisicao.put("codigoDoCliente", cpfCnpj);
 		hashRequisicao.put("dataBaseConsultada", dataBase);
@@ -136,13 +131,24 @@ public final class BacenUtil {
 		String xmlChamadaSisbacen = xStream.toXML(hashRequisicao);
 		LOGGER.debug(xmlChamadaSisbacen);
 		hashOut.put("LPT__PLUGIN_ENVIO", xmlChamadaSisbacen);
+		LOGGER.debug("<<--popularXMLEnvio");
+	}
 
-		if (resumoDoCliente != null) {
-			xStream.alias("map", java.util.Map.class);
-			String xmlRetornoSisbacen = xStream.toXML(resumoDoCliente);
-			LOGGER.debug(xmlRetornoSisbacen);
-			hashOut.put("LPT__PLUGIN_RETORNO", xmlRetornoSisbacen);
-		}
+	/**
+	 * popular LPT__PLUGIN_RETORNO
+	 * 
+	 * @author rsdelia
+	 * @param hashOut
+	 * @param resumoDoCliente
+	 *            Transformo os dados de retorno da consulta ao web service
+	 */
+	public static void popularXMLEnvioRetorno(HashMap<String, Object> hashOut, Response resumoDoCliente) {
+		LOGGER.debug("-->> popularXMLEnvioRetorno");
+		XStream xStream = new XStream(new DomDriver());
+		xStream.alias("map", java.util.Map.class);
+		String xmlRetornoSisbacen = xStream.toXML(resumoDoCliente);
+		LOGGER.debug(xmlRetornoSisbacen);
+		hashOut.put("LPT__PLUGIN_RETORNO", xmlRetornoSisbacen);
 		LOGGER.debug("<<--popularXMLEnvioRetorno");
 	}
 
@@ -176,13 +182,11 @@ public final class BacenUtil {
 	 */
 	public static String tratarXMLRespostaBacen(InputStream inputStream) throws IOException {
 		String xmlResposta = Constants.EMPTY;
-        if (null != inputStream) {
-        	xmlResposta = new BufferedReader(new InputStreamReader(inputStream))
-        		    .lines().parallel().collect(Collectors.joining("\n"));
-	        //xmlResposta = IOUtils.toString(inputStream, "ISO-8859-1");
-        }        
-		Pattern p2 = Pattern.compile("<return>(.*?)</return>"); 
-		Matcher m2 = p2.matcher(xmlResposta);		
+		if (null != inputStream) {
+			xmlResposta = new BufferedReader(new InputStreamReader(inputStream)).lines().parallel().collect(Collectors.joining("\n"));
+		}
+		Pattern p2 = Pattern.compile("<return>(.*?)</return>");
+		Matcher m2 = p2.matcher(xmlResposta);
 		while (m2.find()) {
 			xmlResposta = "<return>" + m2.group(1) + "</return>";
 		}
