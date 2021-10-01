@@ -1,0 +1,191 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>plugins</groupId>
+	<artifactId>bacen-scr</artifactId>
+	<version>9.0.0</version>
+	<name>bacen-scr</name>
+	<description>Web Service para Bacen SCR</description>
+	<properties>
+		<organization>TOTVS Financial Services</organization>
+		<main-class>br.com.totvs.plugins.bacen.BacenScr</main-class>
+		<!-- Nome do Plugin de acesso -->
+		<pluginname>bacen-scr</pluginname>
+		<description>Consulta ao Web Service Bacen SCR</description>
+		<!-- Nome da váriavel do Sistema (System.getProperties()) utilizada -->
+		<!-- no Acesso, para buscar o caminho para o seu diretório de instalação -->
+		<datadir>bacen-scr.datadir</datadir>
+		<!-- chave de acesso ao dado na persistencia -->
+		<primarykey>CPFCNPJ</primarykey>
+		<pkdescription>CPF/CNPJ</pkdescription>
+
+		<!-- Caminho para o Layout do Acesso -->
+		<layoutpath>resources/bacen-scr.json</layoutpath>
+
+		<!-- P - plugin / L - lib para plugin -->
+		<pluginlib>P</pluginlib>
+
+	</properties>
+	<distributionManagement>
+		<repository>
+			<id>totalbanco-releases</id>
+			<url>http://10.51.2.201:9090/artifactory/libs-release-local</url>
+		</repository>
+	</distributionManagement>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<resources>
+			<resource>
+				<directory>src</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>resources</directory>
+				<includes>
+					<include>**/*.*</include>
+				</includes>
+				<targetPath>resources</targetPath>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<!-- <source>1.6</source> <target>1.6</target> -->
+					<source>1.8</source>
+					<target>1.8</target>
+
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<!-- <addClasspath>false</addClasspath> -->
+							<addClasspath>true</addClasspath>
+							<mainClass>${main-class}</mainClass>
+						</manifest>
+						<manifestEntries>
+							<Organization>${organization}</Organization>
+							<Implementation-Plugin>${pluginname}</Implementation-Plugin>
+							<Implementation-Layout>${layoutpath}</Implementation-Layout>
+							<Implementation-Description>${description}</Implementation-Description>
+							<Implementation-Datadir>${datadir}</Implementation-Datadir>
+							<Implementation-FileList>${filelist}</Implementation-FileList>
+							<primarykey>${primarykey}</primarykey>
+							<pkdescription>${pkdescription}</pkdescription>
+							<Plugin-Lib>${pluginlib}</Plugin-Lib>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<executions>
+					<execution>
+						<!-- Aqui estou forçando um clean toda vez que o maven install for 
+							executado. -->
+						<id>auto-clean</id>
+						<phase>initialize</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-clean-plugin</artifactId>
+										<versionRange>[2.4.1,)</versionRange>
+										<goals>
+											<goal>clean</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.totvs.intellector.iw-server</groupId>
+			<artifactId>iw-server-api</artifactId>
+			<version>9.2.14</version>
+		</dependency>
+		<dependency>
+			<groupId>com.totvs.intellector.iw-server</groupId>
+			<artifactId>iw-server-beans</artifactId>
+			<version>9.2.14</version>
+		</dependency>
+		<dependency>
+			<groupId>com.totvs.intellector.plugins</groupId>
+			<artifactId>serasa-lib</artifactId>
+			<version>9.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.12.5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5</version>
+		</dependency>
+
+
+	</dependencies>
+	<organization>
+		<name>TOTVS SA</name>
+		<url>www.totvs.com.br</url>
+	</organization>
+</project>

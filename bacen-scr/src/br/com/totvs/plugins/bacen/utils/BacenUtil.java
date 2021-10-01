@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,6 +22,8 @@ import br.com.totvs.exceptions.ConfigException;
 import br.com.totvs.exceptions.LayoutException;
 import br.com.totvs.plugins.bacen.Response;
 import br.com.totvs.plugins.bacen.constants.Constants;
+import br.gov.bcb.scr2.operacional.webservice.ResumoDaOperacao;
+import br.gov.bcb.scr2.operacional.webservice.ResumoDoVencimento;
 
 /**
  * Classe utilitária do Bacen SCR
@@ -61,19 +65,19 @@ public final class BacenUtil {
 			LOGGER.debug("cnpjIf [" + cnpjIF + "]");
 
 			if (Util.isNullOrEmpty(cpfCnpj)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'CPFCNPJ' nos campos de entrada");
+				throw new LayoutException("CPF/CNPJ não informado: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(tipoCliente)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'TIPOCLIENTE' nos campos de entrada");
+				throw new LayoutException("Tipo do Cliente não informado: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(dataBase)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'DATABASE' nos campos de entrada");
+				throw new LayoutException("Data Base não informada: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(userSisbacen)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'USUARIOSISBACEN' nos campos de entrada");
+				throw new LayoutException("Usuário não informado: campo obrigatório.");
+			}else if (Util.isNullOrEmpty(passwordSisbacen)) {
+				throw new LayoutException("Senha não informada: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(autorizacao)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'AUTORIZACAO' nos campos de entrada");
-			} else if (Util.isNullOrEmpty(passwordSisbacen)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'SENHASISBACEN' nos campos de entrada");
-			} else if (Util.isNullOrEmpty(cnpjIF)) {
-				throw new LayoutException("Erro GRAVE: nao foi encontrado a chave 'CNPJIF' nos campos de entrada");
+				throw new LayoutException("Autorização não informada: campo obrigatório.");
+			}  else if (Util.isNullOrEmpty(cnpjIF)) {
+				throw new LayoutException("CNPJ da Instituição Financeira não informado: campo obrigatório.");
 			}
 			LOGGER.debug("<<--validarParametrosEntrada");
 		} else {
@@ -102,7 +106,7 @@ public final class BacenUtil {
 	}
 
 	/**
-	 * popular LPT__PLUGIN_ENVIO 
+	 * popular LPT__PLUGIN_ENVIO
 	 * 
 	 * @author rsdelia
 	 * @param hashIn
@@ -172,8 +176,6 @@ public final class BacenUtil {
 	public static String getToken(String userSisbacen, String passwordSisbacen) {
 		return Base64.getEncoder().encodeToString(BacenUtil.concatenarUsuarioSenha(userSisbacen, passwordSisbacen).getBytes());
 	}
-	
-
 
 	/**
 	 * @param inputStream
@@ -206,5 +208,235 @@ public final class BacenUtil {
 		String cnpjIF = (String) hashIn.get("CNPJIF");
 		return "?codCliente=" + cpfCnpj + "&tpCliente=" + tipoCliente + "&dataBase=" + dataBase + "&autorizacao=" + autorizacao + "&cnpjIF="
 				+ cnpjIF;
+	}
+
+	/**
+	 * @param responseCode
+	 * @throws ConfigException
+	 */
+	public static void validarAuthResponse(int responseCode) throws ConfigException {
+		if (responseCode == 401) {
+			throw new ConfigException(Constants.ERROR_CODE_401);
+		}
+	}
+	
+	/**
+	 * Retorna TRUE se existir valor a vencer maior que ZERO e FALSE se não existir
+	 * 
+	 * @author rsdelia
+	 * @param hashOut
+	 * @return boolean
+	 */
+	public static boolean isExisteValorAVencer(HashMap<String, Object> hashOut) {
+		BigDecimal creditoAVencerAte30Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_ATE_30_DIAS");
+		BigDecimal creditoAVencerDe31A60Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_31_A_60_DIAS");
+		BigDecimal creditoAVencerDe61A90Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_61_A_90_DIAS");
+		BigDecimal creditoAVencerDe91A180Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_91_A_180_DIAS");
+		BigDecimal creditoAVencerDe181A360Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_181_A_360_DIAS");
+		BigDecimal creditoAVencerDe361A720Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_361_A_720_DIAS");
+		BigDecimal creditoAVencerDe721A1080Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_721_A_1080_DIAS");
+		BigDecimal creditoAVencerDe1081A1440Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1081_A_1440_DIAS");
+		BigDecimal creditoAVencerDe1441A1800Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1441_A_1800_DIAS");
+		BigDecimal creditoAVencerDe1801A5400Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1801_A_5400_DIAS");
+		BigDecimal creditoAVencerAcima5400Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_ACIMA_5400_DIAS");
+		BigDecimal creditoAVencerPrazoIndeterminado = (BigDecimal) hashOut.get("VLR_A_VENCER_COM_PRAZO_INDETERMINADO");
+
+		return (creditoAVencerAte30Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe31A60Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe61A90Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe91A180Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe181A360Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe361A720Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe721A1080Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe1081A1440Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe1441A1800Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerDe1801A5400Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerAcima5400Dias.compareTo(BigDecimal.ZERO) > 0
+				|| creditoAVencerPrazoIndeterminado.compareTo(BigDecimal.ZERO) > 0);
+	}
+	
+	/**
+	 * Montar hashOut de saída do Plugin Estes valores representam fielmente a estrutura do "out" do arquivo bacen-scr.json
+	 * 
+	 * Os códigos de vencimentos a serem considerados são os descritos no "Anexo 1: Código de Vencimento - CodVenc" do leiaute do documento
+	 * 3040.
+	 * 
+	 * @author rsdelia
+	 * @param hashOut
+	 * @param resumoDoCliente
+	 */
+	public static void popularHashSaida(HashMap<String, Object> hashOut, Response resumoDoCliente) {
+
+		// limites de credito
+		BigDecimal limiteCreditoVencimentoAte360Dias = BigDecimal.ZERO;
+		BigDecimal limiteCreditoVencimentoAcima360Dias = BigDecimal.ZERO;
+
+		// credito a liberar
+		BigDecimal creditoLiberarAte360Dias = BigDecimal.ZERO;
+		BigDecimal creditoLiberarAcima360Dias = BigDecimal.ZERO;
+
+		// creditos a vencer
+		BigDecimal creditoAVencerAte30Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe31A60Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe61A90Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe91A180Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe181A360Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe361A720Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe721A1080Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe1081A1440Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe1441A1800Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerDe1801A5400Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerAcima5400Dias = BigDecimal.ZERO;
+		BigDecimal creditoAVencerPrazoIndeterminado = BigDecimal.ZERO;
+
+		// creditos vencidos
+		BigDecimal creditoVencidosDe1A14Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe15A30Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe31A60Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe61A90Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe91A120Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe121A150Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe151A180Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe181A240Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe241A300Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe301A360Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosDe361A540Dias = BigDecimal.ZERO;
+		BigDecimal creditoVencidosAcima540Dias = BigDecimal.ZERO;
+
+		// prejuizo
+		BigDecimal prejuizoAte12Meses = BigDecimal.ZERO;
+		BigDecimal prejuizoMaisQue12Ate48Meses = BigDecimal.ZERO;
+		BigDecimal prejuizoMaisQue48Meses = BigDecimal.ZERO;
+
+		// operacoes com vencimentos
+		List<ResumoDaOperacao> operacoes = resumoDoCliente.getListaDeResumoDasOperacoes();
+
+		if (!Util.isNullOrEmpty(operacoes)) {
+			for (ResumoDaOperacao operacao : operacoes) {
+				List<ResumoDoVencimento> vencimentos = operacao.getListaDeVencimentos();
+				if (!Util.isNullOrEmpty(vencimentos)) {
+					hashOut.put("EXISTE_VALORES_DE_VENCIMENTOS", Boolean.TRUE);
+					for (ResumoDoVencimento vencimento : vencimentos) {
+						// limite de credito
+						if ("v20".equals(vencimento.getCodigoVencimento())) {
+							limiteCreditoVencimentoAte360Dias = limiteCreditoVencimentoAte360Dias.add(vencimento.getValorVencimento());
+						} else if ("v40".equals(vencimento.getCodigoVencimento())) {
+							limiteCreditoVencimentoAcima360Dias = limiteCreditoVencimentoAcima360Dias.add(vencimento.getValorVencimento());
+						} else if ("v60".equals(vencimento.getCodigoVencimento())) { // creditos a liberar
+							creditoLiberarAte360Dias = creditoLiberarAte360Dias.add(vencimento.getValorVencimento());
+						} else if ("v80".equals(vencimento.getCodigoVencimento())) {
+							creditoLiberarAcima360Dias = creditoLiberarAcima360Dias.add(vencimento.getValorVencimento());
+						} else if ("v110".equals(vencimento.getCodigoVencimento())) { // creditos a vencer
+							creditoAVencerAte30Dias = creditoAVencerAte30Dias.add(vencimento.getValorVencimento());
+						} else if ("v120".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe31A60Dias = creditoAVencerDe31A60Dias.add(vencimento.getValorVencimento());
+						} else if ("v130".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe61A90Dias = creditoAVencerDe61A90Dias.add(vencimento.getValorVencimento());
+						} else if ("v140".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe91A180Dias = creditoAVencerDe91A180Dias.add(vencimento.getValorVencimento());
+						} else if ("v150".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe181A360Dias = creditoAVencerDe181A360Dias.add(vencimento.getValorVencimento());
+						} else if ("v160".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe361A720Dias = creditoAVencerDe361A720Dias.add(vencimento.getValorVencimento());
+						} else if ("v165".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe721A1080Dias = creditoAVencerDe721A1080Dias.add(vencimento.getValorVencimento());
+						} else if ("v170".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe1081A1440Dias = creditoAVencerDe1081A1440Dias.add(vencimento.getValorVencimento());
+						} else if ("v175".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe1441A1800Dias = creditoAVencerDe1441A1800Dias.add(vencimento.getValorVencimento());
+						} else if ("v180".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerDe1801A5400Dias = creditoAVencerDe1801A5400Dias.add(vencimento.getValorVencimento());
+						} else if ("v190".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerAcima5400Dias = creditoAVencerAcima5400Dias.add(vencimento.getValorVencimento());
+						} else if ("v199".equals(vencimento.getCodigoVencimento())) {
+							creditoAVencerPrazoIndeterminado = creditoAVencerPrazoIndeterminado.add(vencimento.getValorVencimento());
+						} else if ("v205".equals(vencimento.getCodigoVencimento())) { // creditos vencidos
+							creditoVencidosDe1A14Dias = creditoVencidosDe1A14Dias.add(vencimento.getValorVencimento());
+						} else if ("v210".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe15A30Dias = creditoVencidosDe15A30Dias.add(vencimento.getValorVencimento());
+						} else if ("v220".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe31A60Dias = creditoVencidosDe31A60Dias.add(vencimento.getValorVencimento());
+						} else if ("v230".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe61A90Dias = creditoVencidosDe61A90Dias.add(vencimento.getValorVencimento());
+						} else if ("v240".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe91A120Dias = creditoVencidosDe91A120Dias.add(vencimento.getValorVencimento());
+						} else if ("v245".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe121A150Dias = creditoVencidosDe121A150Dias.add(vencimento.getValorVencimento());
+						} else if ("v250".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe151A180Dias = creditoVencidosDe151A180Dias.add(vencimento.getValorVencimento());
+						} else if ("v255".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe181A240Dias = creditoVencidosDe181A240Dias.add(vencimento.getValorVencimento());
+						} else if ("v260".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe241A300Dias = creditoVencidosDe241A300Dias.add(vencimento.getValorVencimento());
+						} else if ("v270".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe301A360Dias = creditoVencidosDe301A360Dias.add(vencimento.getValorVencimento());
+						} else if ("v280".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosDe361A540Dias = creditoVencidosDe361A540Dias.add(vencimento.getValorVencimento());
+						} else if ("v290".equals(vencimento.getCodigoVencimento())) {
+							creditoVencidosAcima540Dias = creditoVencidosAcima540Dias.add(vencimento.getValorVencimento());
+						} else if ("v310".equals(vencimento.getCodigoVencimento())) { // prejuizo
+							prejuizoAte12Meses = prejuizoAte12Meses.add(vencimento.getValorVencimento());
+						} else if ("v320".equals(vencimento.getCodigoVencimento())) {
+							prejuizoMaisQue12Ate48Meses = prejuizoMaisQue12Ate48Meses.add(vencimento.getValorVencimento());
+						} else if ("v330".equals(vencimento.getCodigoVencimento())) {
+							prejuizoMaisQue48Meses = prejuizoMaisQue48Meses.add(vencimento.getValorVencimento());
+						}
+					}
+				}
+			}
+
+			// limites de credito
+			hashOut.put("VALOR_LIMITE_CREDITO_ATE_360_DIAS", limiteCreditoVencimentoAte360Dias);
+			hashOut.put("VALOR_LIMITE_CREDITO_ACIMA_360_DIAS", limiteCreditoVencimentoAcima360Dias);
+
+			// creditos a liberar
+			hashOut.put("VALOR_CREDITO_A_LIBERAR_ATE_360_DIAS", creditoLiberarAte360Dias);
+			hashOut.put("VALOR_CREDITO_A_LIBERAR_ACIMA_360_DIAS", creditoLiberarAcima360Dias);
+
+			// escopo do projeto
+			// soma os vencidos até 90 dias
+			hashOut.put("VALOR_VENCIDO_ATE_90_DIAS", creditoVencidosDe1A14Dias.add(creditoVencidosDe15A30Dias)
+					.add(creditoVencidosDe31A60Dias).add(creditoVencidosDe61A90Dias));
+			// soma os vencidos acima de 90 dias
+			hashOut.put("VALOR_VENCIDO_ACIMA_90_DIAS",
+					creditoVencidosDe91A120Dias.add(creditoVencidosDe121A150Dias).add(creditoVencidosDe151A180Dias)
+							.add(creditoVencidosDe181A240Dias).add(creditoVencidosDe241A300Dias).add(creditoVencidosDe301A360Dias)
+							.add(creditoVencidosDe361A540Dias).add(creditoVencidosAcima540Dias));
+			// soma os prejuizos
+			hashOut.put("VALOR_EM_PREJUIZO", prejuizoAte12Meses.add(prejuizoMaisQue12Ate48Meses).add(prejuizoMaisQue48Meses));
+
+			// creditos a vencer
+			hashOut.put("VLR_A_VENCER_ATE_30_DIAS", creditoAVencerAte30Dias);
+			hashOut.put("VLR_A_VENCER_DE_31_A_60_DIAS", creditoAVencerDe31A60Dias);
+			hashOut.put("VLR_A_VENCER_DE_61_A_90_DIAS", creditoAVencerDe61A90Dias);
+			hashOut.put("VLR_A_VENCER_DE_91_A_180_DIAS", creditoAVencerDe91A180Dias);
+			hashOut.put("VLR_A_VENCER_DE_181_A_360_DIAS", creditoAVencerDe181A360Dias);
+			hashOut.put("VLR_A_VENCER_DE_361_A_720_DIAS", creditoAVencerDe361A720Dias);
+			hashOut.put("VLR_A_VENCER_DE_721_A_1080_DIAS", creditoAVencerDe721A1080Dias);
+			hashOut.put("VLR_A_VENCER_DE_1081_A_1440_DIAS", creditoAVencerDe1081A1440Dias);
+			hashOut.put("VLR_A_VENCER_DE_1441_A_1800_DIAS", creditoAVencerDe1441A1800Dias);
+			hashOut.put("VLR_A_VENCER_DE_1801_A_5400_DIAS", creditoAVencerDe1801A5400Dias);
+			hashOut.put("VLR_A_VENCER_ACIMA_5400_DIAS", creditoAVencerAcima5400Dias);
+			hashOut.put("VLR_A_VENCER_COM_PRAZO_INDETERMINADO", creditoAVencerPrazoIndeterminado);
+
+			// verifica se existe pelo menos um valor a vencer para retornar true ou false para a política
+			hashOut.put("EXISTE_VALOR_A_VENCER", BacenUtil.isExisteValorAVencer(hashOut));
+
+			// creditos vencidos
+			hashOut.put("VLR_VENCIDO_1_a_14_DIAS", creditoVencidosDe1A14Dias);
+			hashOut.put("VLR_VENCIDO_15_a_30_DIAS", creditoVencidosDe15A30Dias);
+			hashOut.put("VLR_VENCIDO_31_a_60_DIAS", creditoVencidosDe31A60Dias);
+			hashOut.put("VLR_VENCIDO_61_a_90_DIAS", creditoVencidosDe61A90Dias);
+			hashOut.put("VLR_VENCIDO_91_a_120_DIAS", creditoVencidosDe91A120Dias);
+			hashOut.put("VLR_VENCIDO_121_a_150_DIAS", creditoVencidosDe121A150Dias);
+			hashOut.put("VLR_VENCIDO_151_a_180_DIAS", creditoVencidosDe151A180Dias);
+			hashOut.put("VLR_VENCIDO_181_a_240_DIAS", creditoVencidosDe181A240Dias);
+			hashOut.put("VLR_VENCIDO_241_a_300_DIAS", creditoVencidosDe241A300Dias);
+			hashOut.put("VLR_VENCIDO_301_a_360_DIAS", creditoVencidosDe301A360Dias);
+			hashOut.put("VLR_VENCIDO_361_a_540_DIAS", creditoVencidosDe361A540Dias);
+			hashOut.put("VLR_VENCIDO_ACIMA_540_DIAS", creditoVencidosAcima540Dias);
+
+			// prejuizo ou perdas
+			hashOut.put("VLR_PREJUIZO_ATE_12_MESES", prejuizoAte12Meses);
+			hashOut.put("VLR_PREJUIZO_ACIMA_12_ATE_48_MESES", prejuizoMaisQue12Ate48Meses);
+			hashOut.put("VLR_PREJUIZO_ACIMA_48_MESES", prejuizoMaisQue48Meses);
+		}
 	}
 }

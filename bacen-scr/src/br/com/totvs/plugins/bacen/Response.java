@@ -1,6 +1,7 @@
 package br.com.totvs.plugins.bacen;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -109,6 +110,9 @@ public class Response {
 	}
 
 	public List<ResumoDaOperacao> getListaDeResumoDasOperacoes() {
+		if (listaDeResumoDasOperacoes == null) {
+			listaDeResumoDasOperacoes = new ArrayList<ResumoDaOperacao>();
+		}
 		return listaDeResumoDasOperacoes;
 	}
 

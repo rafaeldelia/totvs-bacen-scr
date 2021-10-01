@@ -1,6 +1,5 @@
 package br.com.totvs.plugins.bacen.exceptions;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -16,11 +15,10 @@ public abstract class ResourceErroAbstract {
 
 	public void tratarException(Exception e, HashMap<String, Object> hashOut) throws InfraException, LayoutException, ConfigException {
 
-		if (e instanceof BCServicoException_Exception) {
-			throw new InfraException(e.getMessage());
-		} else if (e instanceof MalformedURLException || e instanceof FileNotFoundException) {
+		if (e instanceof MalformedURLException) {
 			throw new ConfigException(e.getMessage());
-		} else if (e instanceof LayoutException || e instanceof UnmarshalException || e instanceof IOException) {
+		} else if (e instanceof LayoutException || e instanceof UnmarshalException
+				|| e instanceof IOException | e instanceof BCServicoException_Exception) {
 			throw new LayoutException(e.getMessage());
 		} else {
 			throw new InfraException(e.getMessage());
