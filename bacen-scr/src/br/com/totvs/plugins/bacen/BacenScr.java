@@ -66,7 +66,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	public HashMap<String, Object> execute(Map<String, Object> hashIn) throws InfraException, LayoutException, ConfigException {
 		HashMap<String, Object> hashOut = new HashMap<String, Object>();
 		try {
-			LOGGER.info(">> BacenScr.execute()");
+			LOGGER.debug(">> BacenScr.execute()");
 
 			BacenUtil.validarParametrosEntrada(hashIn);
 
@@ -87,7 +87,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 				this.preencherHashOut(hashOut, retornoResumo);
 			}
 
-			LOGGER.info("<< BacenScr.execute()");
+			LOGGER.debug("<< BacenScr.execute()");
 		} catch (LayoutException | IOException | KeyManagementException | NoSuchAlgorithmException | JAXBException | ConfigException
 				| BCServicoException_Exception e) {
 			LOGGER.error("Erro crítico no execute:  [" + e + "]");
@@ -105,7 +105,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	 */
 	private void validarAutenticacaoExecucao(Map<String, Object> hashIn) throws ConfigException {
 
-		LOGGER.info("->>validarAutenticacaoExecucao");
+		LOGGER.debug("->>validarAutenticacaoExecucao");
 
 		userSisbacen = (String) hashIn.get("USUARIOSISBACEN");
 
@@ -117,14 +117,14 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 				protected PasswordAuthentication getPasswordAuthentication() {
 					String user = userSisbacen;
 					String password = passwordSisbacen;
-					LOGGER.info("Configurou o usuario/senha para autorizacao no site.");
+					LOGGER.debug("Configurou o usuario/senha para autorizacao no site.");
 					return new PasswordAuthentication(user, password.toCharArray());
 				}
 			});
 		} catch (RuntimeException e1) {
 			throw new ConfigException("Erro no Authenticator.setDefault(): Erro ao autenticar o usuario e senha no SisbacenSCR.", e1);
 		}
-		LOGGER.info("<<--validarAutenticacaoExecucao");
+		LOGGER.debug("<<--validarAutenticacaoExecucao");
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	private Response consumirWebServiceBacen(Map<String, Object> hashIn)
 			throws UnmarshalException, IOException, NoSuchAlgorithmException, KeyManagementException, JAXBException, ConfigException, BCServicoException_Exception {
 
-		LOGGER.info("-->> consumirWebServiceBacen");
+		LOGGER.debug("-->> consumirWebServiceBacen");
 		
 		Response response = null;
 
@@ -187,7 +187,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		InputStream inputStream;
 
-		LOGGER.info("responseCode -> [" + responseCode + "]");
+		LOGGER.debug("responseCode -> [" + responseCode + "]");
 		
 		BacenUtil.validarAuthResponse(responseCode);
 		
@@ -203,18 +203,18 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 
 		String xmlResposta = BacenUtil.tratarXMLRespostaBacen(inputStream);
 
-		LOGGER.info("xmlResposta -> [" + xmlResposta + "]");
+		LOGGER.debug("xmlResposta -> [" + xmlResposta + "]");
 		
 		JAXBContext context = JAXBContext.newInstance(Response.class);
 
 		Unmarshaller unmarshaller = context.createUnmarshaller();
 
-		LOGGER.info("<<-- consumirWebServiceBacen");
+		LOGGER.debug("<<-- consumirWebServiceBacen");
 
 		try {
 			response = (Response) unmarshaller.unmarshal(new StreamSource(new StringReader(xmlResposta.replaceAll("&", "e"))));			
 		} catch (RuntimeException e) {
-			LOGGER.info("RuntimeException -> [" + e.getMessage() + "]" );
+			LOGGER.error("RuntimeException -> [" + e.getMessage() + "]" );
 			throw new BCServicoException_Exception("Erro crítico ao consumir o Bacen SCR", e);
 		}
 		
@@ -234,9 +234,9 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	 */
 	private void preencherHashOut(HashMap<String, Object> hashOut, Response resumoDoCliente) throws LayoutException {
 
-		LOGGER.info("tratarNegocio-->>");
+		LOGGER.debug("tratarNegocio-->>");
 
-		LOGGER.info("resumoDoCliente [" + resumoDoCliente.toString() + "]");
+		LOGGER.debug("resumoDoCliente [" + resumoDoCliente.toString() + "]");
 
 		hashOut.put("DATA_BASE_CONSULTADA", resumoDoCliente.getDataBaseConsultada());
 		hashOut.put("CNPJ_IF_SOLICITANTE", resumoDoCliente.getCnpjDaIFSolicitante());
@@ -260,7 +260,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		
 		BacenUtil.popularHashSaida(hashOut, resumoDoCliente);		
 		
-		LOGGER.info("<<--tratarNegocio");
+		LOGGER.debug("<<--tratarNegocio");
 	}
 
 	/**
