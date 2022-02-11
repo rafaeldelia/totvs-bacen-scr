@@ -72,11 +72,11 @@ public final class BacenUtil {
 				throw new LayoutException("Data Base não informada: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(userSisbacen)) {
 				throw new LayoutException("Usuário não informado: campo obrigatório.");
-			}else if (Util.isNullOrEmpty(passwordSisbacen)) {
+			} else if (Util.isNullOrEmpty(passwordSisbacen)) {
 				throw new LayoutException("Senha não informada: campo obrigatório.");
 			} else if (Util.isNullOrEmpty(autorizacao)) {
 				throw new LayoutException("Autorização não informada: campo obrigatório.");
-			}  else if (Util.isNullOrEmpty(cnpjIF)) {
+			} else if (Util.isNullOrEmpty(cnpjIF)) {
 				throw new LayoutException("CNPJ da Instituição Financeira não informado: campo obrigatório.");
 			}
 			LOGGER.debug("<<--validarParametrosEntrada");
@@ -219,7 +219,7 @@ public final class BacenUtil {
 			throw new ConfigException(Constants.ERROR_CODE_401);
 		}
 	}
-	
+
 	/**
 	 * Retorna TRUE se existir valor a vencer maior que ZERO e FALSE se não existir
 	 * 
@@ -228,30 +228,33 @@ public final class BacenUtil {
 	 * @return boolean
 	 */
 	public static boolean isExisteValorAVencer(HashMap<String, Object> hashOut) {
-		BigDecimal creditoAVencerAte30Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_ATE_30_DIAS");
-		BigDecimal creditoAVencerDe31A60Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_31_A_60_DIAS");
-		BigDecimal creditoAVencerDe61A90Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_61_A_90_DIAS");
-		BigDecimal creditoAVencerDe91A180Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_91_A_180_DIAS");
-		BigDecimal creditoAVencerDe181A360Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_181_A_360_DIAS");
-		BigDecimal creditoAVencerDe361A720Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_361_A_720_DIAS");
-		BigDecimal creditoAVencerDe721A1080Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_721_A_1080_DIAS");
-		BigDecimal creditoAVencerDe1081A1440Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1081_A_1440_DIAS");
-		BigDecimal creditoAVencerDe1441A1800Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1441_A_1800_DIAS");
-		BigDecimal creditoAVencerDe1801A5400Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_DE_1801_A_5400_DIAS");
-		BigDecimal creditoAVencerAcima5400Dias = (BigDecimal) hashOut.get("VLR_A_VENCER_ACIMA_5400_DIAS");
-		BigDecimal creditoAVencerPrazoIndeterminado = (BigDecimal) hashOut.get("VLR_A_VENCER_COM_PRAZO_INDETERMINADO");
+		Double creditoAVencerAte30Dias = (Double) hashOut.get("VLR_A_VENCER_ATE_30_DIAS");
+		Double creditoAVencerDe31A60Dias = (Double) hashOut.get("VLR_A_VENCER_DE_31_A_60_DIAS");
+		Double creditoAVencerDe61A90Dias = (Double) hashOut.get("VLR_A_VENCER_DE_61_A_90_DIAS");
+		Double creditoAVencerDe91A180Dias = (Double) hashOut.get("VLR_A_VENCER_DE_91_A_180_DIAS");
+		Double creditoAVencerDe181A360Dias = (Double) hashOut.get("VLR_A_VENCER_DE_181_A_360_DIAS");
+		Double creditoAVencerDe361A720Dias = (Double) hashOut.get("VLR_A_VENCER_DE_361_A_720_DIAS");
+		Double creditoAVencerDe721A1080Dias = (Double) hashOut.get("VLR_A_VENCER_DE_721_A_1080_DIAS");
+		Double creditoAVencerDe1081A1440Dias = (Double) hashOut.get("VLR_A_VENCER_DE_1081_A_1440_DIAS");
+		Double creditoAVencerDe1441A1800Dias = (Double) hashOut.get("VLR_A_VENCER_DE_1441_A_1800_DIAS");
+		Double creditoAVencerDe1801A5400Dias = (Double) hashOut.get("VLR_A_VENCER_DE_1801_A_5400_DIAS");
+		Double creditoAVencerAcima5400Dias = (Double) hashOut.get("VLR_A_VENCER_ACIMA_5400_DIAS");
+		Double creditoAVencerPrazoIndeterminado = (Double) hashOut.get("VLR_A_VENCER_COM_PRAZO_INDETERMINADO");
 
-		return (creditoAVencerAte30Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe31A60Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe61A90Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe91A180Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe181A360Dias.compareTo(BigDecimal.ZERO) > 0 || creditoAVencerDe361A720Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe721A1080Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe1081A1440Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe1441A1800Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerDe1801A5400Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerAcima5400Dias.compareTo(BigDecimal.ZERO) > 0
-				|| creditoAVencerPrazoIndeterminado.compareTo(BigDecimal.ZERO) > 0);
+		return (creditoAVencerAte30Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe31A60Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe61A90Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe91A180Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe181A360Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe361A720Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe721A1080Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe1081A1440Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe1441A1800Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerDe1801A5400Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerAcima5400Dias.compareTo(Constants.ZERO_DOUBLE) > 0
+				|| creditoAVencerPrazoIndeterminado.compareTo(Constants.ZERO_DOUBLE) > 0);
 	}
-	
+
 	/**
 	 * Montar hashOut de saída do Plugin Estes valores representam fielmente a estrutura do "out" do arquivo bacen-scr.json
 	 * 
@@ -383,60 +386,85 @@ public final class BacenUtil {
 			}
 
 			// limites de credito
-			hashOut.put("VALOR_LIMITE_CREDITO_ATE_360_DIAS", limiteCreditoVencimentoAte360Dias);
-			hashOut.put("VALOR_LIMITE_CREDITO_ACIMA_360_DIAS", limiteCreditoVencimentoAcima360Dias);
+			hashOut.put("VALOR_LIMITE_CREDITO_ATE_360_DIAS",
+					limiteCreditoVencimentoAte360Dias != null ? limiteCreditoVencimentoAte360Dias.doubleValue() : null);
+			hashOut.put("VALOR_LIMITE_CREDITO_ACIMA_360_DIAS",
+					limiteCreditoVencimentoAcima360Dias != null ? limiteCreditoVencimentoAcima360Dias.doubleValue() : null);
 
 			// creditos a liberar
-			hashOut.put("VALOR_CREDITO_A_LIBERAR_ATE_360_DIAS", creditoLiberarAte360Dias);
-			hashOut.put("VALOR_CREDITO_A_LIBERAR_ACIMA_360_DIAS", creditoLiberarAcima360Dias);
+			hashOut.put("VALOR_CREDITO_A_LIBERAR_ATE_360_DIAS",
+					creditoLiberarAte360Dias != null ? creditoLiberarAte360Dias.doubleValue() : null);
+			hashOut.put("VALOR_CREDITO_A_LIBERAR_ACIMA_360_DIAS",
+					creditoLiberarAcima360Dias != null ? creditoLiberarAcima360Dias.doubleValue() : null);
 
 			// escopo do projeto
 			// soma os vencidos até 90 dias
-			hashOut.put("VALOR_VENCIDO_ATE_90_DIAS", creditoVencidosDe1A14Dias.add(creditoVencidosDe15A30Dias)
-					.add(creditoVencidosDe31A60Dias).add(creditoVencidosDe61A90Dias));
+			BigDecimal vencidoAte90Dias = creditoVencidosDe1A14Dias.add(creditoVencidosDe15A30Dias).add(creditoVencidosDe31A60Dias)
+					.add(creditoVencidosDe61A90Dias);
+			hashOut.put("VALOR_VENCIDO_ATE_90_DIAS", vencidoAte90Dias != null ? vencidoAte90Dias.doubleValue() : null);
+
 			// soma os vencidos acima de 90 dias
-			hashOut.put("VALOR_VENCIDO_ACIMA_90_DIAS",
-					creditoVencidosDe91A120Dias.add(creditoVencidosDe121A150Dias).add(creditoVencidosDe151A180Dias)
-							.add(creditoVencidosDe181A240Dias).add(creditoVencidosDe241A300Dias).add(creditoVencidosDe301A360Dias)
-							.add(creditoVencidosDe361A540Dias).add(creditoVencidosAcima540Dias));
+			BigDecimal valorAcima90Dias = creditoVencidosDe91A120Dias.add(creditoVencidosDe121A150Dias).add(creditoVencidosDe151A180Dias)
+					.add(creditoVencidosDe181A240Dias).add(creditoVencidosDe241A300Dias).add(creditoVencidosDe301A360Dias)
+					.add(creditoVencidosDe361A540Dias).add(creditoVencidosAcima540Dias);
+			hashOut.put("VALOR_VENCIDO_ACIMA_90_DIAS", valorAcima90Dias != null ? valorAcima90Dias.doubleValue() : null);
 			// soma os prejuizos
-			hashOut.put("VALOR_EM_PREJUIZO", prejuizoAte12Meses.add(prejuizoMaisQue12Ate48Meses).add(prejuizoMaisQue48Meses));
+			BigDecimal valorEmPrejuizo = prejuizoAte12Meses.add(prejuizoMaisQue12Ate48Meses).add(prejuizoMaisQue48Meses);
+			hashOut.put("VALOR_EM_PREJUIZO", valorEmPrejuizo != null ? valorEmPrejuizo.doubleValue() : null);
 
 			// creditos a vencer
-			hashOut.put("VLR_A_VENCER_ATE_30_DIAS", creditoAVencerAte30Dias);
-			hashOut.put("VLR_A_VENCER_DE_31_A_60_DIAS", creditoAVencerDe31A60Dias);
-			hashOut.put("VLR_A_VENCER_DE_61_A_90_DIAS", creditoAVencerDe61A90Dias);
-			hashOut.put("VLR_A_VENCER_DE_91_A_180_DIAS", creditoAVencerDe91A180Dias);
-			hashOut.put("VLR_A_VENCER_DE_181_A_360_DIAS", creditoAVencerDe181A360Dias);
-			hashOut.put("VLR_A_VENCER_DE_361_A_720_DIAS", creditoAVencerDe361A720Dias);
-			hashOut.put("VLR_A_VENCER_DE_721_A_1080_DIAS", creditoAVencerDe721A1080Dias);
-			hashOut.put("VLR_A_VENCER_DE_1081_A_1440_DIAS", creditoAVencerDe1081A1440Dias);
-			hashOut.put("VLR_A_VENCER_DE_1441_A_1800_DIAS", creditoAVencerDe1441A1800Dias);
-			hashOut.put("VLR_A_VENCER_DE_1801_A_5400_DIAS", creditoAVencerDe1801A5400Dias);
-			hashOut.put("VLR_A_VENCER_ACIMA_5400_DIAS", creditoAVencerAcima5400Dias);
-			hashOut.put("VLR_A_VENCER_COM_PRAZO_INDETERMINADO", creditoAVencerPrazoIndeterminado);
+			hashOut.put("VLR_A_VENCER_ATE_30_DIAS", creditoAVencerAte30Dias != null ? creditoAVencerAte30Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_31_A_60_DIAS", creditoAVencerDe31A60Dias != null ? creditoAVencerDe31A60Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_61_A_90_DIAS", creditoAVencerDe61A90Dias != null ? creditoAVencerDe61A90Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_91_A_180_DIAS",
+					creditoAVencerDe91A180Dias != null ? creditoAVencerDe91A180Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_181_A_360_DIAS",
+					creditoAVencerDe181A360Dias != null ? creditoAVencerDe181A360Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_361_A_720_DIAS",
+					creditoAVencerDe361A720Dias != null ? creditoAVencerDe361A720Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_721_A_1080_DIAS",
+					creditoAVencerDe721A1080Dias != null ? creditoAVencerDe721A1080Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_1081_A_1440_DIAS",
+					creditoAVencerDe1081A1440Dias != null ? creditoAVencerDe1081A1440Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_1441_A_1800_DIAS",
+					creditoAVencerDe1441A1800Dias != null ? creditoAVencerDe1441A1800Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_DE_1801_A_5400_DIAS",
+					creditoAVencerDe1801A5400Dias != null ? creditoAVencerDe1801A5400Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_ACIMA_5400_DIAS",
+					creditoAVencerAcima5400Dias != null ? creditoAVencerAcima5400Dias.doubleValue() : null);
+			hashOut.put("VLR_A_VENCER_COM_PRAZO_INDETERMINADO",
+					creditoAVencerPrazoIndeterminado != null ? creditoAVencerPrazoIndeterminado.doubleValue() : null);
 
 			// verifica se existe pelo menos um valor a vencer para retornar true ou false para a política
 			hashOut.put("EXISTE_VALOR_A_VENCER", BacenUtil.isExisteValorAVencer(hashOut));
 
 			// creditos vencidos
-			hashOut.put("VLR_VENCIDO_1_a_14_DIAS", creditoVencidosDe1A14Dias);
-			hashOut.put("VLR_VENCIDO_15_a_30_DIAS", creditoVencidosDe15A30Dias);
-			hashOut.put("VLR_VENCIDO_31_a_60_DIAS", creditoVencidosDe31A60Dias);
-			hashOut.put("VLR_VENCIDO_61_a_90_DIAS", creditoVencidosDe61A90Dias);
-			hashOut.put("VLR_VENCIDO_91_a_120_DIAS", creditoVencidosDe91A120Dias);
-			hashOut.put("VLR_VENCIDO_121_a_150_DIAS", creditoVencidosDe121A150Dias);
-			hashOut.put("VLR_VENCIDO_151_a_180_DIAS", creditoVencidosDe151A180Dias);
-			hashOut.put("VLR_VENCIDO_181_a_240_DIAS", creditoVencidosDe181A240Dias);
-			hashOut.put("VLR_VENCIDO_241_a_300_DIAS", creditoVencidosDe241A300Dias);
-			hashOut.put("VLR_VENCIDO_301_a_360_DIAS", creditoVencidosDe301A360Dias);
-			hashOut.put("VLR_VENCIDO_361_a_540_DIAS", creditoVencidosDe361A540Dias);
-			hashOut.put("VLR_VENCIDO_ACIMA_540_DIAS", creditoVencidosAcima540Dias);
+			hashOut.put("VLR_VENCIDO_1_a_14_DIAS", creditoVencidosDe1A14Dias != null ? creditoVencidosDe1A14Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_15_a_30_DIAS", creditoVencidosDe15A30Dias != null ? creditoVencidosDe15A30Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_31_a_60_DIAS", creditoVencidosDe31A60Dias != null ? creditoVencidosDe31A60Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_61_a_90_DIAS", creditoVencidosDe61A90Dias != null ? creditoVencidosDe61A90Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_91_a_120_DIAS",
+					creditoVencidosDe91A120Dias != null ? creditoVencidosDe91A120Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_121_a_150_DIAS",
+					creditoVencidosDe121A150Dias != null ? creditoVencidosDe121A150Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_151_a_180_DIAS",
+					creditoVencidosDe151A180Dias != null ? creditoVencidosDe151A180Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_181_a_240_DIAS",
+					creditoVencidosDe181A240Dias != null ? creditoVencidosDe181A240Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_241_a_300_DIAS",
+					creditoVencidosDe241A300Dias != null ? creditoVencidosDe241A300Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_301_a_360_DIAS",
+					creditoVencidosDe301A360Dias != null ? creditoVencidosDe301A360Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_361_a_540_DIAS",
+					creditoVencidosDe361A540Dias != null ? creditoVencidosDe361A540Dias.doubleValue() : null);
+			hashOut.put("VLR_VENCIDO_ACIMA_540_DIAS",
+					creditoVencidosAcima540Dias != null ? creditoVencidosAcima540Dias.doubleValue() : null);
 
 			// prejuizo ou perdas
-			hashOut.put("VLR_PREJUIZO_ATE_12_MESES", prejuizoAte12Meses);
-			hashOut.put("VLR_PREJUIZO_ACIMA_12_ATE_48_MESES", prejuizoMaisQue12Ate48Meses);
-			hashOut.put("VLR_PREJUIZO_ACIMA_48_MESES", prejuizoMaisQue48Meses);
+			hashOut.put("VLR_PREJUIZO_ATE_12_MESES", prejuizoAte12Meses != null ? prejuizoAte12Meses.doubleValue() : null);
+			hashOut.put("VLR_PREJUIZO_ACIMA_12_ATE_48_MESES",
+					prejuizoMaisQue12Ate48Meses != null ? prejuizoMaisQue12Ate48Meses.doubleValue() : null);
+			hashOut.put("VLR_PREJUIZO_ACIMA_48_MESES", prejuizoMaisQue48Meses != null ? prejuizoMaisQue48Meses.doubleValue() : null);
 		}
 	}
 }

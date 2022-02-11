@@ -54,12 +54,9 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	private static String passwordSisbacen = "";
 
 	/**
-	 * Método execute(hashIn) principal do Plugin
-	 * Responsavel em validar os dados de entrada que estão configurados no "in" do arquivo bacen-scr.json
-	 * Autenticar com o usuario e senha para acessar o Bacen
-	 * Consumir o WS do Bacen SCR de acordo com o parâmetro do intellector
-	 * Recupera as informações que estão configuradas no "out" do bacen-scr.json
-	 * Loga os dados de entrada e saída da operação
+	 * Método execute(hashIn) principal do Plugin Responsavel em validar os dados de entrada que estão configurados no "in" do arquivo
+	 * bacen-scr.json Autenticar com o usuario e senha para acessar o Bacen Consumir o WS do Bacen SCR de acordo com o parâmetro do
+	 * intellector Recupera as informações que estão configuradas no "out" do bacen-scr.json Loga os dados de entrada e saída da operação
 	 * Lança exceções específicas em casos de validações do Bacen SCR
 	 * 
 	 */
@@ -139,16 +136,16 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 	 * @throws KeyManagementException
 	 * @throws JAXBException
 	 * @throws ConfigException
-	 * @throws BCServicoException_Exception 
+	 * @throws BCServicoException_Exception
 	 */
-	private Response consumirWebServiceBacen(Map<String, Object> hashIn)
-			throws UnmarshalException, IOException, NoSuchAlgorithmException, KeyManagementException, JAXBException, ConfigException, BCServicoException_Exception {
+	private Response consumirWebServiceBacen(Map<String, Object> hashIn) throws UnmarshalException, IOException, NoSuchAlgorithmException,
+			KeyManagementException, JAXBException, ConfigException, BCServicoException_Exception {
 
 		LOGGER.debug("-->> consumirWebServiceBacen");
-		
+
 		Response response = null;
 
-		HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("bacen-scr");
+		HashMap<String, Object> configuracoesPlugin = PluginConfig.getDetails("bacenscr");
 
 		String jsonOut = (String) configuracoesPlugin.get("properties");
 
@@ -188,9 +185,9 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		InputStream inputStream;
 
 		LOGGER.debug("responseCode -> [" + responseCode + "]");
-		
+
 		BacenUtil.validarAuthResponse(responseCode);
-		
+
 		if (200 <= responseCode && responseCode <= 299) {
 
 			inputStream = connection.getInputStream();
@@ -204,7 +201,7 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		String xmlResposta = BacenUtil.tratarXMLRespostaBacen(inputStream);
 
 		LOGGER.debug("xmlResposta -> [" + xmlResposta + "]");
-		
+
 		JAXBContext context = JAXBContext.newInstance(Response.class);
 
 		Unmarshaller unmarshaller = context.createUnmarshaller();
@@ -212,12 +209,12 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		LOGGER.debug("<<-- consumirWebServiceBacen");
 
 		try {
-			response = (Response) unmarshaller.unmarshal(new StreamSource(new StringReader(xmlResposta.replaceAll("&", "e"))));			
+			response = (Response) unmarshaller.unmarshal(new StreamSource(new StringReader(xmlResposta.replaceAll("&", "e"))));
 		} catch (RuntimeException e) {
-			LOGGER.error("RuntimeException -> [" + e.getMessage() + "]" );
+			LOGGER.error("RuntimeException -> [" + e.getMessage() + "]");
 			throw new BCServicoException_Exception("Erro crítico ao consumir o Bacen SCR", e);
 		}
-		
+
 		return response;
 	}
 
@@ -241,8 +238,10 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		hashOut.put("DATA_BASE_CONSULTADA", resumoDoCliente.getDataBaseConsultada());
 		hashOut.put("CNPJ_IF_SOLICITANTE", resumoDoCliente.getCnpjDaIFSolicitante());
 		hashOut.put("CODIGO_CLIENTE", resumoDoCliente.getCodigoDoCliente());
-		hashOut.put("COOBRIGACAO_ASSUMIDA", resumoDoCliente.getCoobrigacaoAssumida());
-		hashOut.put("COOBRIGACAO_RECEBIDA", resumoDoCliente.getCoobrigacaoRecebida());
+		hashOut.put("COOBRIGACAO_ASSUMIDA",
+				resumoDoCliente.getCoobrigacaoAssumida() != null ? resumoDoCliente.getCoobrigacaoAssumida().doubleValue() : null);
+		hashOut.put("COOBRIGACAO_RECEBIDA",
+				resumoDoCliente.getCoobrigacaoRecebida() != null ? resumoDoCliente.getCoobrigacaoRecebida().doubleValue() : null);
 		hashOut.put("DATA_INICIO_RELACIONAMENTO", resumoDoCliente.getDataInicioRelacionamento());
 		hashOut.put("PERCENTUAL_DOCUMENTOS_PROCESSADOS", resumoDoCliente.getPercentualDocumentosProcessados());
 		hashOut.put("PERCENTUAL_VOLUME_PROCESSADO", resumoDoCliente.getPercentualVolumeProcessado());
@@ -250,16 +249,23 @@ public class BacenScr extends ResourceErroAbstract implements PluginInterface {
 		hashOut.put("QUANTIDADE_OPERACOES", resumoDoCliente.getQuantidadeDeOperacoes());
 		hashOut.put("QUANTIDADE_OPERACOES_DISCORDANCIA", resumoDoCliente.getQuantidadeOperacoesDiscordancia());
 		hashOut.put("QUANTIDADE_OPERACOES_SUB_JUDICE", resumoDoCliente.getQuantidadeOperacoesSubJudice());
-		hashOut.put("RESPONSABILIDADE_TOTAL_DISCORDANCIA", resumoDoCliente.getResponsabilidadeTotalDiscordancia());
-		hashOut.put("RESPONSABILIDADE_TOTAL_SUB_JUDICE", resumoDoCliente.getResponsabilidadeTotalSubJudice());
-		hashOut.put("RISCO_INDIRETO_VENDOR", resumoDoCliente.getRiscoIndiretoVendor());
+		hashOut.put("RESPONSABILIDADE_TOTAL_DISCORDANCIA",
+				resumoDoCliente.getResponsabilidadeTotalDiscordancia() != null
+						? resumoDoCliente.getResponsabilidadeTotalDiscordancia().doubleValue()
+						: null);
+		hashOut.put("RESPONSABILIDADE_TOTAL_SUB_JUDICE",
+				resumoDoCliente.getResponsabilidadeTotalSubJudice() != null
+						? resumoDoCliente.getResponsabilidadeTotalSubJudice().doubleValue()
+						: null);
+		hashOut.put("RISCO_INDIRETO_VENDOR",
+				resumoDoCliente.getRiscoIndiretoVendor() != null ? resumoDoCliente.getRiscoIndiretoVendor().doubleValue() : null);
 		hashOut.put("TIPO_DO_CLIENTE", resumoDoCliente.getTipoDoCliente());
-		hashOut.put("EXISTE_VALORES_DE_VENCIMENTOS", Boolean.FALSE);	
-		
+		hashOut.put("EXISTE_VALORES_DE_VENCIMENTOS", Boolean.FALSE);
+
 		this.tratarMensagemRetornoValidacao(resumoDoCliente);
-		
-		BacenUtil.popularHashSaida(hashOut, resumoDoCliente);		
-		
+
+		BacenUtil.popularHashSaida(hashOut, resumoDoCliente);
+
 		LOGGER.debug("<<--tratarNegocio");
 	}
 

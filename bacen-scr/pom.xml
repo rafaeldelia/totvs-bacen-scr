@@ -3,25 +3,25 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>plugins</groupId>
-	<artifactId>bacen-scr</artifactId>
+	<artifactId>bacenscr</artifactId>
 	<version>9.0.0</version>
-	<name>bacen-scr</name>
+	<name>bacenscr</name>
 	<description>Web Service para Bacen SCR</description>
 	<properties>
 		<organization>TOTVS Financial Services</organization>
 		<main-class>br.com.totvs.plugins.bacen.BacenScr</main-class>
 		<!-- Nome do Plugin de acesso -->
-		<pluginname>bacen-scr</pluginname>
+		<pluginname>bacenscr</pluginname>
 		<description>Consulta ao Web Service Bacen SCR</description>
 		<!-- Nome da váriavel do Sistema (System.getProperties()) utilizada -->
 		<!-- no Acesso, para buscar o caminho para o seu diretório de instalação -->
-		<datadir>bacen-scr.datadir</datadir>
+		<datadir>bacenscr.datadir</datadir>
 		<!-- chave de acesso ao dado na persistencia -->
 		<primarykey>CPFCNPJ</primarykey>
 		<pkdescription>CPF/CNPJ</pkdescription>
 
 		<!-- Caminho para o Layout do Acesso -->
-		<layoutpath>resources/bacen-scr.json</layoutpath>
+		<layoutpath>resources/bacenscr.json</layoutpath>
 
 		<!-- P - plugin / L - lib para plugin -->
 		<pluginlib>P</pluginlib>

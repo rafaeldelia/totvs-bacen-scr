@@ -1,6 +1,6 @@
 {
 	"class_name": "br.com.totvs.plugins.bacen.BacenScr",
-	"plugin_name": "bacen-scr",
+	"plugin_name": "bacenscr",
 	"description": "Consulta ao BACEN SCR - Sistemas de Informacoes de Credito",
 	"layout": {
 		"editable": true,
